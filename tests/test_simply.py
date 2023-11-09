@@ -6,6 +6,7 @@ import unittest
 
 # from amaas.grpc import api
 
+
 class TestAmaaS(unittest.TestCase):
 
     def test_amaas_api(self):
