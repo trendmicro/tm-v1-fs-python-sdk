@@ -13,7 +13,7 @@ with open(join(base_dir, package_name, "_version.py")) as f:
         r"__version__\s+=\s+[\"\']([^\"\']+)[\"\']", f.read()
     ).group(1)
 
-setup(install_requires=['grpcio==1.56.2', 'protobuf==4.23.4'],
+setup(install_requires=['grpcio==1.51.3', 'protobuf==4.22.0'],
       name="visionone-filesecurity",
       version=package_version,
       author="Trend Micro VisionOne File Security Team",
@@ -32,6 +32,7 @@ setup(install_requires=['grpcio==1.56.2', 'protobuf==4.23.4'],
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
           'Programming Language :: Python :: 3.11',
+          'Programming Language :: Python :: 3.12',
           "License :: OSI Approved :: MIT License",
 ],
     python_requires='>=3.7',
