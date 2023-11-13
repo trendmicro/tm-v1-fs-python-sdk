@@ -15,7 +15,7 @@ This guide outlines the steps to establish your development environment and conf
 Install the File Security SDK package with pip:
 
    ```sh
-   python -m pip install file-security-sdk
+   python -m pip install visionone-filesecurity
    ```
 
 ## Obtain an API Key
