@@ -55,7 +55,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    | Command Line Arguments                 | Value                    | Optional |
    | :------------------ | :----------------------- | :------- |
    | --region or -r | The region you obtained your API key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, etc. | Yes, either -r or -a
-   | --addr or -a   | Trend Vision One File Security server, such as: fs-sdk-_REGION_.xdr.trendmicro.com:443 | Yes, either -r or -a      |
+   | --addr or -a   | Trend Vision One File Security server, such as: antimalware.__REGION__.cloudone.trendmicro.com:443 | Yes, either -r or -a      |
    | --api_key      | Vision One API Key              | No       |
    | --filename or -f |        File to be scanned            | No       |
 
@@ -72,7 +72,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    using File Security server address `-a` instead of region `-r`:
 
    ```sh
-   python3 client.py -f FILENAME -a fs-sdk-_REGION_.xdr.trendmicro.com:443 --api_key API_KEY
+   python3 client.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --api_key API_KEY
    ```
 
    or
@@ -80,7 +80,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    using asynchronous IO example program:
 
    ```sh
-   python3 client_aio.py -f FILENAME -a fs-sdk-_REGION_.xdr.trendmicro.com:443 --api_key API_KEY
+   python3 client_aio.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --api_key API_KEY
    ```
 
 ### Code Examples
