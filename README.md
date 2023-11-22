@@ -54,7 +54,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
 
    | Command Line Arguments                 | Value                    | Optional |
    | :------------------ | :----------------------- | :------- |
-   | --region or -r | The region you obtained your API key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, etc. | Yes, either -r or -a
+   | --region or -r | The region you obtained your API key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1` | Yes, either -r or -a |
    | --addr or -a   | Trend Vision One File Security server, such as: antimalware.__REGION__.cloudone.trendmicro.com:443 | Yes, either -r or -a      |
    | --api_key      | Vision One API Key              | No       |
    | --filename or -f |        File to be scanned            | No       |
@@ -64,7 +64,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    Make sure to customize the example program by configuring it with the API key from your Vision One account, found in your Vision One Dashboard. Assign the value of your Vision One Region's `API_KEY` to the variable and set `FILENAME` to the desired target file.
 
    ```sh
-   python3 client.py -f FILENAME -r us-1 --api_key API_KEY
+   python3 client.py -f FILENAME -r us-east-1 --tls true --api_key API_KEY
    ```
 
    or
@@ -72,7 +72,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    using File Security server address `-a` instead of region `-r`:
 
    ```sh
-   python3 client.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --api_key API_KEY
+   python3 client.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls true --api_key API_KEY
    ```
 
    or
@@ -80,7 +80,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    using asynchronous IO example program:
 
    ```sh
-   python3 client_aio.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --api_key API_KEY
+   python3 client_aio.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls true --api_key API_KEY
    ```
 
 ### Code Examples

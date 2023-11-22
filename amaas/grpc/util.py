@@ -32,7 +32,7 @@ C1_GB_REGION = "gb-1"
 C1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
              C1_US_REGION, C1_TREND_REGION]
 V1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_IN_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION]
-SupportedV1Regions = V1Regions
+SupportedV1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION]
 SupportedC1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
                       C1_US_REGION]
 
@@ -97,14 +97,13 @@ def _init_by_region_util(region, api_key, enable_tls=True, ca_cert=None, is_aio_
     }
 
     # make sure it is valid V1 or C1 region
-    if region not in AllValidRegions:
-        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, AllValidRegions)
-
-    # map it to C1 region if it is V1 region
-    if region in SupportedV1Regions:
+    if region not in SupportedV1Regions:
+        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, SupportedV1Regions)
+    else:
+        # map it to C1 region if it is V1 region
         c1_region = V1ToC1RegionMapping.get(region)
         if not c1_region:
-            raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, AllValidRegions)
+            raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, SupportedV1Regions)
         region = c1_region
 
     host = mapping.get(region, None)
