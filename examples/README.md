@@ -7,9 +7,9 @@ After completing a scan, [File Security displays scan results](https://docs.tren
 ## Procedure
 
 - If File Security indicates a file contains malware, you can take the following actions:
-   - Quarantine the file. See a [AWS quarantine example](https://github.com/trendmicro/tm-v1-fs-python-sdk/blob/main/examples/aws_quarantine.py).
-   - Send notification messages using:
-      - Slack
-      - Email
-      - Microsoft Teams
+  - Quarantine the file. See a [AWS quarantine example](https://github.com/trendmicro/tm-v1-fs-python-sdk/blob/main/examples/aws_quarantine.py).
+  - Send notification messages using:
+    - Slack
+    - Email
+    - Microsoft Teams
 - If File Security does not find malware in a file, you can promote the file.
