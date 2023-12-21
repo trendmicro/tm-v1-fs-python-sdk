@@ -1,6 +1,3 @@
-# ROOT_DIR := $(abspath ../../)
-# include $(ROOT_DIR)/build-scripts/variables.mk
-
 PIPY_URL ?= https://upload.pypi.org/legacy/
 TOKEN ?=
 
@@ -15,8 +12,7 @@ build: clean
 	pipenv run python setup.py sdist bdist_wheel
 
 upload:
-	#pipenv run twine upload ./dist/*.whl
 	pipenv run twine upload --repository-url $(PIPY_URL) -u __token__ -p $(TOKEN) ./dist/*.whl --skip-existing
 
 clean:
-	@rm -rf dist build amaas/*.egg-info amaas/grpc/protos/
+	@rm -rf dist build *.egg-info amaas/grpc/protos/
