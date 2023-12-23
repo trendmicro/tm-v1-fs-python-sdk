@@ -77,7 +77,7 @@ def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, stats: dict) 
                 stage=scan_pb2.STAGE_RUN,
                 file_name=None,
                 rs_size=0,
-                offset=data_reader.tell(),
+                offset=message.offset,
                 chunk=chunk)
 
             stats["total_upload"] = stats.get(

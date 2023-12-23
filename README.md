@@ -20,7 +20,7 @@ Install the File Security SDK package with pip:
 
 ## Obtain an API Key
 
-The File Security SDK requires a valid API Key provided as parameter to the SDK client object. It can accept Trend Vision One API keys. 
+The File Security SDK requires a valid API Key provided as parameter to the SDK client object. It can accept Trend Vision One API keys.
 
 When obtaining the API Key, ensure that the API Key is associated with the region that you plan to use. It is important to note that Trend Vision One API Keys are associated with different regions, please refer to the region flag below to obtain a better understanding of the valid regions associated with the respective API Key.
 
@@ -29,9 +29,9 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
 1. Login to the Trend Vision One.
 2. Create a new Trend Vision One API key:
 
-* Navigate to the Trend Vision One User Roles page.
-* Verify that there is a role with the "Run file scan via SDK" permissions enabled. If not, create a role by clicking on "Add Role" and "Save" once finished.
-* Directly configure a new key on the Trend Vision One API Keys page, using the role which contains the "Run file scan via SDK" permission. It is advised to set an expiry time for the API key and make a record of it for future reference.
+- Navigate to the Trend Vision One User Roles page.
+- Verify that there is a role with the "Run file scan via SDK" permissions enabled. If not, create a role by clicking on "Add Role" and "Save" once finished.
+- Directly configure a new key on the Trend Vision One API Keys page, using the role which contains the "Run file scan via SDK" permission. It is advised to set an expiry time for the API key and make a record of it for future reference.
 
 ## Run SDK
 
