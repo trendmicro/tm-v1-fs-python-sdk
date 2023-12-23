@@ -79,7 +79,7 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
                     stage=scan_pb2.STAGE_RUN,
                     file_name=None,
                     rs_size=0,
-                    offset=data_reader.tell(),
+                    offset=response.offset,
                     chunk=chunk)
 
                 stats["total_upload"] = stats.get(
