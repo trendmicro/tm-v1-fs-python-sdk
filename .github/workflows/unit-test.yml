@@ -1,0 +1,26 @@
+name: unittest
+on:
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Set up python 3.9
+      - name: Prepare python env
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      # Install pipenv
+      - name: Install pipenv
+        run: pip install pipenv
+
+      # Pack and publish Python SDK
+      - name: Exec py client unit test
+        run: make -f ./tools/Makefile test
