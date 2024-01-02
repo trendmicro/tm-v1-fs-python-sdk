@@ -9,7 +9,8 @@
 name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
 
 on:
-  push:
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -34,7 +35,7 @@ jobs:
 
     - name: Build a binary wheel and a source tarball
       run: >-
-        make -f ./tools/Makefile build
+        make build
 
     - name: tox
       run: >-
