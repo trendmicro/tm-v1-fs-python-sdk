@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 1.0.5 - 2024-02-16
+* fix upload offset
+
 ## 1.0.4 - 2023-05-18
 * set default timeout_in_seconds to 180 seconds
 
