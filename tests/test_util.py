@@ -24,7 +24,7 @@ def test_insecure_channel():
     channel = amaas.grpc.util._init_by_region_util(
         "us-east-1", None, False, None, False
     )
-    assert type(channel) == grpc._channel.Channel
+    assert type(channel) is grpc._channel.Channel
 
 
 #
@@ -34,7 +34,7 @@ def test_aio_insecure_channel():
     channel = amaas.grpc.util._init_by_region_util(
         "us-east-1", None, is_aio_channel=True
     )
-    assert type(channel) == grpc.aio._channel.Channel
+    assert type(channel) is grpc.aio._channel.Channel
 
 
 #
@@ -42,7 +42,7 @@ def test_aio_insecure_channel():
 #
 def test_secure_channel():
     channel = amaas.grpc.util._init_by_region_util("us-east-1", None, True, None, False)
-    assert type(channel) == grpc._channel.Channel
+    assert type(channel) is grpc._channel.Channel
 
 
 #
@@ -52,7 +52,7 @@ def test_aio_secure_channel():
     channel = amaas.grpc.util._init_by_region_util(
         "us-east-1", None, True, None, is_aio_channel=True
     )
-    assert type(channel) == grpc.aio._channel.Channel
+    assert type(channel) is grpc.aio._channel.Channel
 
 
 #
@@ -63,7 +63,7 @@ def test_def_ssl_only_channel(channel_mock):
     amaas.grpc.util._init_by_region_util("us-east-1", None, True, None, False)
 
     args = channel_mock.call_args.args
-    assert type(args[1]._credentials) == grpc._cython.cygrpc.SSLChannelCredentials
+    assert type(args[1]._credentials) is grpc._cython.cygrpc.SSLChannelCredentials
 
 
 #
@@ -78,7 +78,7 @@ def test_ssl_only_channel(channel_mock):
     )
 
     args = channel_mock.call_args.args
-    assert type(args[1]._credentials) == grpc._cython.cygrpc.SSLChannelCredentials
+    assert type(args[1]._credentials) is grpc._cython.cygrpc.SSLChannelCredentials
 
 
 #
@@ -97,4 +97,4 @@ def test_composite_channel_with_apikey(channel_mock, auth_mock):
     )
 
     args = channel_mock.call_args.args
-    assert type(args[1]._credentials) == grpc._cython.cygrpc.CompositeChannelCredentials
+    assert type(args[1]._credentials) is grpc._cython.cygrpc.CompositeChannelCredentials
