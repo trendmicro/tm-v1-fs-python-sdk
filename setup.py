@@ -6,7 +6,7 @@ base_dir = abspath(dirname(__file__))
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open(join(base_dir, "VERSION"), "r") as f:
+with open(join(base_dir, "VERSION"), "r") as fh:
     package_version = fh.read().strip()
 
 setup(
