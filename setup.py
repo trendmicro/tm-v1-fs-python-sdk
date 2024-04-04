@@ -1,12 +1,9 @@
 from setuptools import setup, find_namespace_packages
-from os.path import abspath, dirname, join
-
-base_dir = abspath(dirname(__file__))
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open(join(base_dir, "VERSION"), "r") as fh:
+with open("VERSION", "r") as fh:
     package_version = fh.read().strip()
 
 setup(
