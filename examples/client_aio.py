@@ -1,5 +1,4 @@
 import argparse
-from distutils.util import strtobool
 import time
 import asyncio
 
@@ -14,7 +13,7 @@ async def main(args):
 
     tasks = set()
     for file_name in args.filename:
-        task = asyncio.create_task(amaas.grpc.aio.scan_file(handle, file_name, args.tags))
+        task = asyncio.create_task(amaas.grpc.aio.scan_file(handle, file_name=file_name, pml=args.pml, tags=args.tags))
         tasks.add(task)
 
     s = time.perf_counter()
@@ -38,13 +37,15 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--addr', action='store', default='127.0.0.1:50051', required=False,
                         help='gRPC server address and port (default 127.0.0.1:50051)')
     parser.add_argument('-r', '--region', action='store',
-                        help='AMaaS service region; e.g. us-1 or dev')
+                        help='AMaaS service region; e.g. us-east-1 or eu-central-1')
     parser.add_argument('--api_key', action='store',
                         help='api key for authentication')
-    parser.add_argument('--tls', type=lambda x: bool(strtobool(x)), default=False,
+    parser.add_argument('--tls', action=argparse.BooleanOptionalAction, default=False,
                         help='enable TLS gRPC ')
     parser.add_argument('--ca_cert', action='store',
                         help='CA certificate')
+    parser.add_argument('--pml', action=argparse.BooleanOptionalAction, default=False,
+                        help='enable predictive machine learning detection')
     parser.add_argument('-t', '--tags', action='store', nargs='+',
                         help='list of tags')
 

@@ -40,14 +40,16 @@ async def quit(handle):
 
 
 async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifier: str, tags: List[str],
-                     app_name: str) -> str:
+                     pml: bool, feedback: bool) -> str:
     _validate_tags(tags)
     stub = scan_pb2_grpc.ScanStub(channel)
     stats = {}
     result = None
+    bulk = True
+
     try:
         metadata = (
-            (APP_NAME_HEADER, app_name),
+            (APP_NAME_HEADER, APP_NAME_FILE_SCAN),
         )
         call = stub.Run(timeout=timeout_in_seconds, metadata=metadata)
 
@@ -57,8 +59,11 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
                                offset=0,
                                chunk=None,
                                tags=tags,
+                               trendx=pml,
                                file_sha1="sha1:" + _digest_hex(data_reader, "sha1"),
-                               file_sha256="sha256:" + _digest_hex(data_reader, "sha256"))
+                               file_sha256="sha256:" + _digest_hex(data_reader, "sha256"),
+                               bulk=bulk,
+                               spn_feedback=feedback)
 
         await call.write(request)
 
@@ -69,28 +74,45 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
                 if response.stage != scan_pb2.STAGE_RUN:
                     raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, response.cmd,
                                          response.stage)
-                logger.debug(
-                    f"stage RUN, try to read {response.length} at offset {response.offset}")
+                length = []
+                offset = []
 
-                data_reader.seek(response.offset)
-                chunk = data_reader.read(response.length)
+                if bulk:
+                    logger.debug("enter bulk mode")
+                    bulk_count = len(response.bulk_offset)
 
-                request = scan_pb2.C2S(
-                    stage=scan_pb2.STAGE_RUN,
-                    file_name=None,
-                    rs_size=0,
-                    offset=data_reader.tell(),
-                    chunk=chunk)
+                    if bulk_count > 1:
+                        logger.debug("bulk transfer triggered")
 
-                stats["total_upload"] = stats.get(
-                    "total_upload", 0) + len(chunk)
-                await call.write(request)
+                    length = response.bulk_length[:]
+                    offset = response.bulk_offset[:]
+                else:
+                    logger.debug("enter non-bulk mode")
+                    length.append(response.length)
+                    offset.append(response.offset)
+
+                for i in range(len(length)):
+                    logger.debug(f"try to read {length[i]} at offset {offset[i]}")
+                    data_reader.seek(offset[i])
+                    chunk = data_reader.read(length[i])
+
+                    request = scan_pb2.C2S(
+                        stage=scan_pb2.STAGE_RUN,
+                        file_name=None,
+                        rs_size=0,
+                        offset=offset[i],
+                        chunk=chunk)
+
+                    stats["total_upload"] = stats.get(
+                        "total_upload", 0) + len(chunk)
+
+                    await call.write(request)
             elif response.cmd == scan_pb2.CMD_QUIT:
                 if response.stage != scan_pb2.STAGE_FINI:
                     raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, response.cmd,
                                          response.stage)
                 result = response.result
-                logger.debug("receive QUIT, exit loop...\n")
+                logger.debug("receive QUIT, exit loop...")
                 break
             else:
                 logger.debug("unknown command...")
@@ -117,7 +139,7 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
 
 
 async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
-                    app_name: str = APP_NAME_FILE_SCAN) -> str:
+                    pml: bool = False, feedback: bool = False) -> str:
     try:
         f = open(file_name, "rb")
         fid = os.path.basename(file_name)
@@ -128,10 +150,10 @@ async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = Non
     except (PermissionError, IOError) as err:
         logger.debug("Permission error: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION, file_name)
-    return await _scan_data(channel, f, n, fid, tags, app_name)
+    return await _scan_data(channel, f, n, fid, tags, pml, feedback)
 
 
 async def scan_buffer(channel: grpc.Channel, bytes_buffer: bytes, uid: str, tags: List[str] = None,
-                      app_name: str = APP_NAME_FILE_SCAN) -> str:
+                      pml: bool = False, feedback: bool = False) -> str:
     f = io.BytesIO(bytes_buffer)
-    return await _scan_data(channel, f, len(bytes_buffer), uid, tags, app_name)
+    return await _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback)

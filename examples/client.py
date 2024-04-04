@@ -3,7 +3,6 @@ import sys
 import time
 
 import amaas.grpc
-from distutils.util import strtobool
 
 if __name__ == "__main__":
 
@@ -14,13 +13,15 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--addr', action='store', default='127.0.0.1:50051', required=False,
                         help='gRPC server address and port (default 127.0.0.1:50051)')
     parser.add_argument('-r', '--region', action='store',
-                        help='AMaaS service region; e.g. us-1 or dev')
+                        help='AMaaS service region; e.g. us-east-1 or eu-central-1')
     parser.add_argument('--api_key', action='store',
                         help='api key for authentication')
-    parser.add_argument('--tls', type=lambda x: bool(strtobool(x)), default=False,
+    parser.add_argument('--tls', action=argparse.BooleanOptionalAction, default=False,
                         help='enable TLS gRPC ')
     parser.add_argument('--ca_cert', action='store',
                         help='CA certificate')
+    parser.add_argument('--pml', action=argparse.BooleanOptionalAction, default=False,
+                        help='enable predictive machine learning detection')
     parser.add_argument('-t', '--tags', action='store', nargs='+',
                         help='list of tags')
 
@@ -34,7 +35,7 @@ if __name__ == "__main__":
     s = time.perf_counter()
 
     try:
-        result = amaas.grpc.scan_file(handle, args.filename, args.tags)
+        result = amaas.grpc.scan_file(handle, file_name=args.filename, pml=args.pml, tags=args.tags)
         elapsed = time.perf_counter() - s
         print(f"scan executed in {elapsed:0.2f} seconds.")
         print(result)

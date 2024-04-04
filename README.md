@@ -20,7 +20,7 @@ Install the File Security SDK package with pip:
 
 ## Obtain an API Key
 
-The File Security SDK requires a valid API Key provided as parameter to the SDK client object. It can accept Trend Vision One API keys. 
+The File Security SDK requires a valid API Key provided as parameter to the SDK client object. It can accept Trend Vision One API keys.
 
 When obtaining the API Key, ensure that the API Key is associated with the region that you plan to use. It is important to note that Trend Vision One API Keys are associated with different regions, please refer to the region flag below to obtain a better understanding of the valid regions associated with the respective API Key.
 
@@ -29,9 +29,9 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
 1. Login to the Trend Vision One.
 2. Create a new Trend Vision One API key:
 
-* Navigate to the Trend Vision One User Roles page.
-* Verify that there is a role with the "Run file scan via SDK" permissions enabled. If not, create a role by clicking on "Add Role" and "Save" once finished.
-* Directly configure a new key on the Trend Vision One API Keys page, using the role which contains the "Run file scan via SDK" permission. It is advised to set an expiry time for the API key and make a record of it for future reference.
+- Navigate to the Trend Vision One User Roles page.
+- Verify that there is a role with the "Run file scan via SDK" permissions enabled. If not, create a role by clicking on "Add Role" and "Save" once finished.
+- Directly configure a new key on the Trend Vision One API Keys page, using the role which contains the "Run file scan via SDK" permission. It is advised to set an expiry time for the API key and make a record of it for future reference.
 
 ## Run SDK
 
@@ -52,12 +52,14 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
 
 3. Current Python examples support following command line arguments
 
-   | Command Line Arguments                 | Value                    | Optional |
-   | :------------------ | :----------------------- | :------- |
-   | --region or -r | The region you obtained your API key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1` | Yes, either -r or -a |
-   | --addr or -a   | Trend Vision One File Security server, such as: antimalware.__REGION__.cloudone.trendmicro.com:443 | Yes, either -r or -a      |
-   | --api_key      | Vision One API Key              | No       |
-   | --filename or -f |        File to be scanned            | No       |
+   | Command Line Arguments | Value                                                                                                                                                                               | Optional             |
+   |------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
+   | --region or -r         | The region you obtained your API key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1` | Yes, either -r or -a |
+   | --addr or -a           | Trend Vision One File Security server, such as: antimalware.__REGION__.cloudone.trendmicro.com:443                                                                                  | Yes, either -r or -a |
+   | --api_key              | Vision One API Key                                                                                                                                                                  | No                   |
+   | --filename or -f       | File to be scanned                                                                                                                                                                  | No                   |
+   | --pml                  | Predictive Machine Learning                                                                                                                                                         | Yes                  |
+   | --tags or -f           | List of tags                                                                                                                                                                        | Yes                  |
 
 4. Run one of the examples.
 
@@ -82,46 +84,3 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    ```sh
    python3 client_aio.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls true --api_key API_KEY
    ```
-
-### Code Examples
-
-```python
-import json
-import amaas.grpc
-
-handle = amaas.grpc.init(YOUR_FILE_SECURITY_SERVER, YOUR_VISION_ONE_KEY, True)
-
-result = amaas.grpc.scan_file(args.filename, handle)
-print(result)
-
-result_json = json.loads(result)
-print("Got scan result: %d" % result_json['scanResult'])
-
-amaas.grpc.quit(handle)
-
-```
-
-to use asyncio with  coroutines and tasks,
-
-```python:
-import json
-import pprint
-import asyncio
-import amaas.grpc.aio
-
-async def scan_files():
-   handle = amaas.grpc.aio.init(YOUR_FILE_SECURITY_SERVER, YOUR_VISION_ONE_KEY, True)
-
-   tasks = [asyncio.create_task(amaas.grpc.aio.scan_file(file_name, handle))]
-
-   scan_results = await asyncio.gather(*tasks)
-
-   for scan_result in scan_results:
-      pprint.pprint(json.loads(scan_result))
-
-   await amaas.grpc.aio.quit(handle)
-
-
-asyncio.run(scan_files())
-
-```

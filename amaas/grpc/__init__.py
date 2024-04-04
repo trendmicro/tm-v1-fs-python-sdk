@@ -56,33 +56,56 @@ def init(host, api_key=None, enable_tls=False, ca_cert=None):
     return _init_util(host, api_key, enable_tls, ca_cert, False)
 
 
-def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, stats: dict) -> None:
+def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, stats: dict) -> None:
+    responses = []
+
     while True:
+        for r in responses:
+            if r[0] == "INIT":
+                response = r[1]
+            elif r[0] == "RUN":
+                offset = r[1]
+                length = r[2]
+                data_reader.seek(offset)
+                chunk = data_reader.read(length)
+                response = scan_pb2.C2S(
+                    stage=scan_pb2.STAGE_RUN,
+                    file_name=None,
+                    rs_size=0,
+                    offset=offset,
+                    chunk=chunk,
+                )
+                stats["total_upload"] = stats.get("total_upload", 0) + len(chunk)
+            else:
+                raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, "None", r[0])
+            yield response
+
+        responses.clear()
         message = pipeline.get_message()
 
         if message.stage == scan_pb2.STAGE_INIT:
             logger.debug("stage INIT")
-            yield message
+            responses.append(("INIT", message))
         elif message.stage == scan_pb2.STAGE_RUN:
             if message.cmd != scan_pb2.CMD_RETR:
                 raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, message.cmd, message.stage)
 
-            logger.debug(
-                f"stage RUN, try to read {message.length} at offset {message.offset}")
+            length = []
+            offset = []
 
-            data_reader.seek(message.offset)
-            chunk = data_reader.read(message.length)
+            if bulk:
+                offset = message.bulk_offset[:]
+                length = message.bulk_length[:]
 
-            message = scan_pb2.C2S(
-                stage=scan_pb2.STAGE_RUN,
-                file_name=None,
-                rs_size=0,
-                offset=data_reader.tell(),
-                chunk=chunk)
+                if len(length) > 1:
+                    logger.debug("bulk transfer triggered")
+            else:
+                offset.append(message.offset)
+                length.append(message.length)
 
-            stats["total_upload"] = stats.get(
-                "total_upload", 0) + len(chunk)
-            yield message
+            for i in range(len(length)):
+                logger.debug(f"stage RUN, try to read {length[i]} at offset {offset[i]}")
+                responses.append(("RUN", offset[i], length[i]))
         elif message.stage == scan_pb2.STAGE_FINI:
             if message.cmd != scan_pb2.CMD_QUIT:
                 raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, message.cmd, message.stage)
@@ -99,27 +122,31 @@ def quit(handle):
 
 
 def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifier: str, tags: List[str],
-               app_name: str) -> str:
+               pml: bool, feedback: bool) -> str:
     _validate_tags(tags)
     stub = scan_pb2_grpc.ScanStub(channel)
     pipeline = _Pipeline()
     stats = {}
     result = None
+    bulk = True
 
     try:
         metadata = (
-            (APP_NAME_HEADER, app_name),
+            (APP_NAME_HEADER, APP_NAME_FILE_SCAN),
         )
-        responses = stub.Run(_generate_messages(pipeline, data_reader, stats), timeout=timeout_in_seconds,
+        responses = stub.Run(_generate_messages(pipeline, data_reader, bulk, stats), timeout=timeout_in_seconds,
                              metadata=metadata)
         message = scan_pb2.C2S(stage=scan_pb2.STAGE_INIT,
                                file_name=identifier,
                                rs_size=size,
                                offset=0,
                                chunk=None,
+                               trendx=pml,
                                tags=tags,
                                file_sha1="sha1:" + _digest_hex(data_reader, "sha1"),
-                               file_sha256="sha256:" + _digest_hex(data_reader, "sha256"))
+                               file_sha256="sha256:" + _digest_hex(data_reader, "sha256"),
+                               bulk=bulk,
+                               spn_feedback=feedback)
 
         pipeline.set_message(message)
 
@@ -129,7 +156,7 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
             elif response.cmd == scan_pb2.CMD_QUIT:
                 result = response.result
                 pipeline.set_message(response)
-                logger.debug("receive QUIT, exit loop...\n")
+                logger.debug("receive QUIT, exit loop...")
                 break
             else:
                 logger.debug("unknown command...")
@@ -153,7 +180,8 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
     return result
 
 
-def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None, app_name: str = APP_NAME_FILE_SCAN) -> str:
+def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
+              pml: bool = False, feedback: bool = False) -> str:
     try:
         f = open(file_name, "rb")
         fid = os.path.basename(file_name)
@@ -165,10 +193,10 @@ def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None, app
         logger.debug("Permission error: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION, file_name)
 
-    return _scan_data(channel, f, n, fid, tags, app_name)
+    return _scan_data(channel, f, n, fid, tags, pml, feedback)
 
 
 def scan_buffer(channel: grpc.Channel, bytes_buffer: bytes, uid: str, tags: List[str] = None,
-                app_name: str = APP_NAME_FILE_SCAN) -> str:
+                pml: bool = False, feedback: bool = False) -> str:
     f = io.BytesIO(bytes_buffer)
-    return _scan_data(channel, f, len(bytes_buffer), uid, tags, app_name)
+    return _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback)
