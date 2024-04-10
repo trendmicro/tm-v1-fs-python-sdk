@@ -22,7 +22,7 @@ LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 logger.setLevel(LOG_LEVEL)
 logger.propagate = False
 
-timeout_in_seconds = 180
+timeout_in_seconds = int(os.environ.get('TM_AM_SCAN_TIMEOUT_SECS', 300))
 
 
 class _Pipeline:

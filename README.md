@@ -1,16 +1,33 @@
-# Trend Vision One File Security Python SDK User Guide
+# Trend Vision One™ File Security Python SDK User Guide
 
-The Trend Vision One File Security Python SDK empowers developers to craft applications seamlessly integrating with the cloud-based Trend Vision One anti-malware file scanning service. This ensures a thorough scan of data and artifacts within the applications, identifying potential malicious elements.
+Trend Vision One™ - File Security is a scanner app for files and cloud storage. This scanner can detect all types of malicious software (malware) including trojans, ransomware, spyware, and more. Based on fragments of previously seen malware, File Security detects obfuscated or polymorphic variants of malware.
+File Security can assess any file type or size for malware and display real-time results. With the latest file reputation and variant protection technologies backed by leading threat research, File Security automates malware scanning.
+File Security can also scan objects across your environment in any application, whether on-premises or in the cloud.
 
-This guide outlines the steps to establish your development environment and configure your project, laying the foundation for utilizing the File Security Python SDK effectively.
+The Python software development kit (SDK) for Trend Vision One™ File Security empowers you to craft applications which seamlessly integrate with File Security. With this SDK you can perform a thorough scan of data and artifacts within your applications to identify potential malicious elements.
+Follow the steps below to set up your development environment and configure your project, laying the foundation to effectively use File Security.
 
-## Requirements
+## Checking prerequisites
 
 - Python 3.7 or newer
-- Trend Vision One account with a chosen region - for more information, see the [Trend Vision One documentation](https://docs.trendmicro.com/en-us/enterprise/trend-micro-xdr-help/Home).
-- A Trend Vision One API key with proper role - for more information, see the [Trend Vision One API key documentation](https://docs.trendmicro.com/en-us/enterprise/trend-vision-one/administrative-setti/accountspartfoundati/api-keys.aspx).
+- Trend Vision One account with a chosen region - for more information, see the [Trend Vision One documentation](https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-trend-micro-xdr-abou_001).
+- A Trend Vision One API key with proper role - for more information, see the [Trend Vision One API key documentation](https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-api-keys).
 
-## Installation
+When you have all the prerequisites, continue with creating an API key.
+
+## Creating an API Key
+
+The File Security SDK requires a valid application programming interface (API) key provided as a parameter to the SDK client object. Trend Vision One API keys are associated with different regions. Refer to the region flag below to obtain a better understanding of the valid regions associated with the API key. For more information, see the [Trend Vision One API key documentation](https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-api-keys).
+
+### Procedure
+
+- Go to Administrations > API Keys.
+- Click Add API Key.
+- Configure the API key to use the role with the 'Run file scan via SDK' permission.
+- Verify that the API key is associated with the region you plan to use.
+- Set an expiry time for the API key and make a record of it for future reference.
+
+## Installing the SDK
 
 Install the File Security SDK package with pip:
 
@@ -18,69 +35,199 @@ Install the File Security SDK package with pip:
    python -m pip install visionone-filesecurity
    ```
 
-## Obtain an API Key
+## Using File Security Python SDK
 
-The File Security SDK requires a valid API Key provided as parameter to the SDK client object. It can accept Trend Vision One API keys.
+Using File Security Python SDK to scan for malware involves the following basic steps:
 
-When obtaining the API Key, ensure that the API Key is associated with the region that you plan to use. It is important to note that Trend Vision One API Keys are associated with different regions, please refer to the region flag below to obtain a better understanding of the valid regions associated with the respective API Key.
+1. Create an AMaaS handle object by specifying preferred Vision One region where scanning should be done and a valid API key.
+2. Replace "YOUR_API_KEY_OR_TOKEN" and "YOUR_REGION" with your actual API key or token and the desired region.
+3. Invoke file scan method to scan the target data.
+4. Parse the JSON response returned by the scan APIs to determine whether the scanned data contains malware or not.
 
-If you plan on using a Trend Vision One region, be sure to pass in region parameter when running custom program with File Security SDK to specify the region of that API key and to ensure you have proper authorization. The list of supported Trend Vision One regions can be found at API Reference section below.
+### Basic Sample Code
 
-1. Login to the Trend Vision One.
-2. Create a new Trend Vision One API key:
+```python
+api_key = "YOUR_API_KEY_OR_TOKEN"
+region = "YOUR_REGION"
 
-- Navigate to the Trend Vision One User Roles page.
-- Verify that there is a role with the "Run file scan via SDK" permissions enabled. If not, create a role by clicking on "Add Role" and "Save" once finished.
-- Directly configure a new key on the Trend Vision One API Keys page, using the role which contains the "Run file scan via SDK" permission. It is advised to set an expiry time for the API key and make a record of it for future reference.
+try:
+    handle = amaas.grpc.init_by_region(region=region, api_key=api_key)
+except Exception as err:
+    print(err)
 
-## Run SDK
+s = time.perf_counter()
 
-### Run with File Security SDK examples
+try:
+    result = amaas.grpc.scan_file(handle, file_name=filename, pml=pml, tags=tags)
+    elapsed = time.perf_counter() - s
+    print(f"scan executed in {elapsed:0.2f} seconds.")
+    print(result)
+except Exception as e:
+    print(e)
 
-1. Go to `/examples/` in current directory.
+amaas.grpc.quit(handle)
+```
 
-   ```sh
-   cd examples/
-   ```
+### AIO Sample Code
 
-2. There are two Python examples in the folder, one with regular file i/o and one with asynchronous file i/o
+```python
+api_key = "YOUR_API_KEY_OR_TOKEN"
+region = "YOUR_REGION"
 
-   ```text
-   client_aio.py
-   client.py
-   ```
+async def main():
+    handle = amaas.grpc.aio.init_by_region(region=region, api_key=api_key)
 
-3. Current Python examples support following command line arguments
+    tasks = set()
+    for file_name in file_list:
+        task = asyncio.create_task(amaas.grpc.aio.scan_file(handle, file_name=file_name, pml=pml, tags=tags))
+        tasks.add(task)
 
-   | Command Line Arguments | Value                                                                                                                                                                               | Optional             |
-   |------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
-   | --region or -r         | The region you obtained your API key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1` | Yes, either -r or -a |
-   | --addr or -a           | Trend Vision One File Security server, such as: antimalware.__REGION__.cloudone.trendmicro.com:443                                                                                  | Yes, either -r or -a |
-   | --api_key              | Vision One API Key                                                                                                                                                                  | No                   |
-   | --filename or -f       | File to be scanned                                                                                                                                                                  | No                   |
-   | --pml                  | Predictive Machine Learning                                                                                                                                                         | Yes                  |
-   | --tags or -f           | List of tags                                                                                                                                                                        | Yes                  |
+    s = time.perf_counter()
 
-4. Run one of the examples.
+    results = await asyncio.gather(*tasks)
+    elapsed = time.perf_counter() - s
+    print(f"scan tasks are executed in {elapsed:0.2f} seconds.")
 
-   Make sure to customize the example program by configuring it with the API key from your Vision One account, found in your Vision One Dashboard. Assign the value of your Vision One Region's `API_KEY` to the variable and set `FILENAME` to the desired target file.
+    await amaas.grpc.aio.quit(handle)
+    return results
 
-   ```sh
-   python3 client.py -f FILENAME -r us-east-1 --tls true --api_key API_KEY
-   ```
+scan_results = asyncio.run(main())
+for scan_result in scan_results:
+        print(scan_result)
+```
 
-   or
+### Sample JSON Response
 
-   using File Security server address `-a` instead of region `-r`:
+```json
+{
+    "scannerVersion": "1.0.0-29",
+    "schemaVersion": "1.0.0",
+    "scanResult": 1,
+    "scanId": "74c7362b-8245-48be-81fe-b620a0409ef1",
+    "scanTimestamp": "2024-04-09T03:17:18.26Z",
+    "fileName": "EICAR_TEST_FILE-1.exe",
+    "foundMalwares": [
+        {
+            "fileName": "Eicar.exe",
+            "malwareName": "Eicar_test_file"
+        }
+    ],
+    "fileSHA1": "96f11a72c53aac4b24a5e4899bc9f2341d0b7a83",
+    "fileSHA256": "7dddcd0f64165f51291a41f49b6246cf85c3e6e599c096612cccce09566091f2"
+}
+```
 
-   ```sh
-   python3 client.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls true --api_key API_KEY
-   ```
+When malicious content is detected in the scanned object, `scanResult` will show a non-zero value. Otherwise, the value will be `null`. Moreover, when malware is detected, `foundMalwares` will be non-empty containing one or more name/value pairs of `fileName` and `malwareName`. `fileName` will be filename of malware detected while `malwareName` will be the name of the virus/malware found.
 
-   or
+## Python Client SDK API Reference
 
-   using asynchronous IO example program:
+### Initialization
 
-   ```sh
-   python3 client_aio.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls true --api_key API_KEY
-   ```
+#### ```def amaas.grpc.init_by_region(region: str, api_key: str, enable_tls: bool = True, ca_cert: str = None) -> grpc.Channel```
+
+Creates a new instance of the grpc Channel, and provisions essential settings, including authentication/authorization credentials (API key), preferred service region, etc.
+
+**_Parameters_**
+
+| Parameter  | Description                                                                                                                                                                                             |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
+| api_key    | Your own Vision One API Key.                                                                                                                                                                            |
+| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                                                                |
+| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                                         |
+
+**_Return_**
+A grpc Channel instance
+
+#### ```def amaas.grpc.aio.init_by_region(region: str, api_key: str, enable_tls: bool = True, ca_cert: str = None) -> grpc.aio.Channel```
+
+Creates a new instance of the grpc aio Channel, and provisions essential settings, including authentication/authorization credentials (API key), preferred service region, etc.
+
+**_Parameters_**
+
+| Parameter  | Description                                                                                                                                                                                             |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
+| api_key    | Your own Vision One API Key.                                                                                                                                                                            |
+| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                                                                |
+| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                                         |
+
+**_Return_**
+A grpc aio Channel instance
+
+### Scan
+
+#### ```def amaas.grpc.scan_file(handle: grpc.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False) -> str```
+
+Scan a file for malware and retrieves response data from the API.
+
+**_Parameters_**
+
+| Parameter | Description                                                                                                 |
+|-----------|-------------------------------------------------------------------------------------------------------------|
+| handle    | The grpc Channel instance was created from the init function.                                               |
+| file_name | The name of the file with the path of the directory containing the file to scan.                            |
+| tags      | A list of strings to be used to tag the scan result. At most 8 tags with a maximum length of 63 characters. |
+| pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
+| feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
+
+**_Return_**
+String the scanned result in JSON format.
+
+#### ```def amaas.grpc.aio.scan_file(handle: grpc.aio.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False) -> str```
+
+AsyncIO Scan a file for malware and retrieves response data from the API.
+
+**_Parameters_**
+
+| Parameter | Description                                                                                                 |
+|-----------|-------------------------------------------------------------------------------------------------------------|
+| handle    | The grpc aio Channel instance was created from the init function.                                           |
+| file_name | The name of the file with the path of the directory containing the file to scan.                            |
+| tags      | A list of strings to be used to tag the scan result. At most 8 tags with a maximum length of 63 characters. |
+| pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
+| feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
+
+**_Return_**
+String the scanned result in JSON format.
+
+### Cleaning Up
+
+#### ```def amaas.grpc.quit(handle: grpc.aio.Channel) -> None```
+
+Remember to clean up the grpc Channel when you are done using it to release any allocated resources:
+
+**_Parameters_**
+
+| Parameter | Description                                               |
+|-----------|-----------------------------------------------------------|
+| handle    | The grpc Channel instance created from the init function. |
+
+#### ```def amaas.grpc.aio.quit(handle: grpc.aio.Channel) -> None```
+
+Remember to clean up the grpc aio Channel when you are done using it to release any allocated resources:
+
+**_Parameters_**
+
+| Parameter | Description                                                   |
+|-----------|---------------------------------------------------------------|
+| handle    | The grpc aio Channel instance created from the init function. |
+
+## Environment Variables
+
+The following environment variables are supported by Python Client SDK and can be used in lieu of values specified as function arguments.
+
+| Variable Name             | Description & Purpose                                                      | Valid Values               |
+|---------------------------|----------------------------------------------------------------------------|----------------------------|
+| `TM_AM_SCAN_TIMEOUT_SECS` | Specify, in number of seconds, to override the default scan timeout period | 0, 1, 2, ... ; default=300 |
+
+## Thread Safety
+
+- scanFile() or scanBuffer() are designed to be thread-safe. It should be able to invoke scanFile() concurrently from multiple threads without protecting scanFile() with mutex or other synchronization mechanisms.
+
+## Ensuring Secure Communication with TLS
+
+The communication channel between the client program or SDK and the Trend Vision One™ File Security service is fortified with robust server-side TLS encryption. This ensures that all data transmitted between the client and Trend service remains thoroughly encrypted and safeguarded.
+The certificate employed by server-side TLS is a publicly-signed certificate from Trend Micro Inc, issued by a trusted Certificate Authority (CA), further bolstering security measures.
+
+The File Security SDK consistently adopts TLS as the default communication channel, prioritizing security at all times. It is strongly advised not to disable TLS in a production environment while utilizing the File Security SDK, as doing so could compromise the integrity and confidentiality of transmitted data.
