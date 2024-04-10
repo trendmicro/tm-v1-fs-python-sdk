@@ -13,7 +13,7 @@ async def main(args):
 
     tasks = set()
     for file_name in args.filename:
-        task = asyncio.create_task(amaas.grpc.aio.scan_file(handle, file_name=file_name, pml=args.pml, tags=args.tags))
+        task = asyncio.create_task(amaas.grpc.aio.scan_file(handle, file_name=file_name, pml=args.pml, tags=args.tags, feedback=args.feedback))
         tasks.add(task)
 
     s = time.perf_counter()
@@ -48,6 +48,8 @@ if __name__ == "__main__":
                         help='enable predictive machine learning detection')
     parser.add_argument('-t', '--tags', action='store', nargs='+',
                         help='list of tags')
+    parser.add_argument('--feedback', action=argparse.BooleanOptionalAction, default=False,
+                        help='enable feedback for predictive machine learning detection')
 
     arguments = parser.parse_args()
 

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.1.1 - 2024-04-10
+
+* Update README.md
+* Extend the scan default timeout to 300 seconds
+
 ## 1.1.0 - 2024-04-03
 
 * Update protos
