@@ -5,7 +5,6 @@ import time
 import amaas.grpc
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-f', '--filename', action='store', default=sys.argv[0],
@@ -16,15 +15,15 @@ if __name__ == "__main__":
                         help='AMaaS service region; e.g. us-east-1 or eu-central-1')
     parser.add_argument('--api_key', action='store',
                         help='api key for authentication')
-    parser.add_argument('--tls', action=argparse.BooleanOptionalAction, default=False,
+    parser.add_argument('--tls', action='store_true', default=False,
                         help='enable TLS gRPC ')
     parser.add_argument('--ca_cert', action='store',
                         help='CA certificate')
-    parser.add_argument('--pml', action=argparse.BooleanOptionalAction, default=False,
+    parser.add_argument('--pml', action='store_true', default=False,
                         help='enable predictive machine learning detection')
     parser.add_argument('-t', '--tags', action='store', nargs='+',
                         help='list of tags')
-    parser.add_argument('--feedback', action=argparse.BooleanOptionalAction, default=False,
+    parser.add_argument('--feedback', action='store_true', default=False,
                         help='enable feedback for predictive machine learning detection')
 
     args = parser.parse_args()
