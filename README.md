@@ -97,6 +97,7 @@ for scan_result in scan_results:
 ```
 
 ### Sample JSON Response
+#### Concise Format
 
 ```json
 {
@@ -116,6 +117,71 @@ for scan_result in scan_results:
     "fileSHA256": "7dddcd0f64165f51291a41f49b6246cf85c3e6e599c096612cccce09566091f2"
 }
 ```
+#### Verbose Format
+```json
+{
+    "scanType": "sdk",
+    "objectType": "file",
+    "timestamp": {
+        "start": "2024-04-26T18:43:48.639Z",
+        "end": "2024-04-26T18:43:49.941Z"
+    },
+    "schemaVersion": "1.0.0",
+    "scannerVersion": "1.0.0-1",
+    "fileName": "TRENDX_detect.exe",
+    "rsSize": 356352,
+    "scanId": "84947a19-b84a-4091-bb7d-8422ab5098a7",
+    "accountId": "7423a980-b5af-4e28-bf0b-b58cdf623bb8",
+    "result": {
+        "atse": {
+            "elapsedTime": 1004335,
+            "fileType": 7,
+            "fileSubType": 2,
+            "version": {
+                "engine": "23.57.0-1002",
+                "lptvpn": 301,
+                "ssaptn": 721,
+                "tmblack": 253,
+                "tmwhite": 227,
+                "macvpn": 904
+            },
+            "malwareCount": 0,
+            "malware": null,
+            "error": null,
+            "fileTypeName": "EXE",
+            "fileSubTypeName": "VSDT_EXE_W32"
+        },
+        "trendx": {
+            "elapsedTime": 296763,
+            "fileType": 7,
+            "fileSubType": 2,
+            "version": {
+                "engine": "23.57.0-1002",
+                "tmblack": 253,
+                "trendx": 331
+            },
+            "malwareCount": 1,
+            "malware": [
+                {
+                    "name": "Ransom.Win32.TRX.XXPE1",
+                    "fileName": "TRENDX_detect.exe",
+                    "type": "Ransom",
+                    "fileType": 7,
+                    "fileSubType": 2,
+                    "fileTypeName": "EXE",
+                    "fileSubTypeName": "VSDT_EXE_W32"
+                }
+            ],
+            "error": null,
+            "fileTypeName": "EXE",
+            "fileSubTypeName": "VSDT_EXE_W32"
+        }
+    },
+    "fileSHA1": "b448479b0a6a5d387c71600e1b75700ba7f42b0a",
+    "fileSHA256": "4b7593109f81b5a770d440d8c28fa1457cd4b95d51b5d049fb301fc99c41da39",
+    "appName": "V1FS"
+}
+```
 
 When malicious content is detected in the scanned object, `scanResult` will show a non-zero value. Otherwise, the value will be `null`. Moreover, when malware is detected, `foundMalwares` will be non-empty containing one or more name/value pairs of `fileName` and `malwareName`. `fileName` will be filename of malware detected while `malwareName` will be the name of the virus/malware found.
 
@@ -130,11 +196,11 @@ Creates a new instance of the grpc Channel, and provisions essential settings, i
 **_Parameters_**
 
 | Parameter  | Description                                                                                                                                                                                             |
-|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                            |
-| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                                                                |
-| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                                         |
+| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
+| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                              |
 
 **_Return_**
 A grpc Channel instance
@@ -146,47 +212,49 @@ Creates a new instance of the grpc aio Channel, and provisions essential setting
 **_Parameters_**
 
 | Parameter  | Description                                                                                                                                                                                             |
-|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                            |
-| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                                                                |
-| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                                         |
+| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
+| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                              |
 
 **_Return_**
 A grpc aio Channel instance
 
 ### Scan
 
-#### ```def amaas.grpc.scan_file(handle: grpc.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False) -> str```
+#### ```def amaas.grpc.scan_file(handle: grpc.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False) -> str```
 
 Scan a file for malware and retrieves response data from the API.
 
 **_Parameters_**
 
 | Parameter | Description                                                                                                 |
-|-----------|-------------------------------------------------------------------------------------------------------------|
+| --------- | ----------------------------------------------------------------------------------------------------------- |
 | handle    | The grpc Channel instance was created from the init function.                                               |
 | file_name | The name of the file with the path of the directory containing the file to scan.                            |
 | tags      | A list of strings to be used to tag the scan result. At most 8 tags with a maximum length of 63 characters. |
 | pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
 | feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
+| verbose   | Enable log verbose mode                                                                                     |
 
 **_Return_**
 String the scanned result in JSON format.
 
-#### ```def amaas.grpc.aio.scan_file(handle: grpc.aio.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False) -> str```
+#### ```def amaas.grpc.aio.scan_file(handle: grpc.aio.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False) -> str```
 
 AsyncIO Scan a file for malware and retrieves response data from the API.
 
 **_Parameters_**
 
 | Parameter | Description                                                                                                 |
-|-----------|-------------------------------------------------------------------------------------------------------------|
+| --------- | ----------------------------------------------------------------------------------------------------------- |
 | handle    | The grpc aio Channel instance was created from the init function.                                           |
 | file_name | The name of the file with the path of the directory containing the file to scan.                            |
 | tags      | A list of strings to be used to tag the scan result. At most 8 tags with a maximum length of 63 characters. |
 | pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
 | feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
+| verbose   | Enable log verbose mode                                                                                     |
 
 **_Return_**
 String the scanned result in JSON format.
@@ -200,7 +268,7 @@ Remember to clean up the grpc Channel when you are done using it to release any 
 **_Parameters_**
 
 | Parameter | Description                                               |
-|-----------|-----------------------------------------------------------|
+| --------- | --------------------------------------------------------- |
 | handle    | The grpc Channel instance created from the init function. |
 
 #### ```def amaas.grpc.aio.quit(handle: grpc.aio.Channel) -> None```
@@ -210,7 +278,7 @@ Remember to clean up the grpc aio Channel when you are done using it to release 
 **_Parameters_**
 
 | Parameter | Description                                                   |
-|-----------|---------------------------------------------------------------|
+| --------- | ------------------------------------------------------------- |
 | handle    | The grpc aio Channel instance created from the init function. |
 
 ## Environment Variables
@@ -218,7 +286,7 @@ Remember to clean up the grpc aio Channel when you are done using it to release 
 The following environment variables are supported by Python Client SDK and can be used in lieu of values specified as function arguments.
 
 | Variable Name             | Description & Purpose                                                      | Valid Values               |
-|---------------------------|----------------------------------------------------------------------------|----------------------------|
+| ------------------------- | -------------------------------------------------------------------------- | -------------------------- |
 | `TM_AM_SCAN_TIMEOUT_SECS` | Specify, in number of seconds, to override the default scan timeout period | 0, 1, 2, ... ; default=300 |
 
 ## Thread Safety

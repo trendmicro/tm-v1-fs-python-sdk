@@ -26,6 +26,8 @@ if __name__ == "__main__":
                         help='list of tags')
     parser.add_argument('--feedback', action=argparse.BooleanOptionalAction, default=False,
                         help='enable feedback for predictive machine learning detection')
+    parser.add_argument('-v', '--verbose', action=argparse.BooleanOptionalAction, default=False,
+                        help='enable log verbose mode')
 
     args = parser.parse_args()
 
@@ -37,7 +39,7 @@ if __name__ == "__main__":
     s = time.perf_counter()
 
     try:
-        result = amaas.grpc.scan_file(handle, file_name=args.filename, pml=args.pml, tags=args.tags, feedback=args.feedback)
+        result = amaas.grpc.scan_file(handle, file_name=args.filename, pml=args.pml, tags=args.tags, feedback=args.feedback, verbose=args.verbose)
         elapsed = time.perf_counter() - s
         print(f"scan executed in {elapsed:0.2f} seconds.")
         print(result)
