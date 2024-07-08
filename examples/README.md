@@ -60,6 +60,7 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
     | --filename or -f       | File to be scanned                                                                                                                                                                                | No                   |
     | --pml                  | Predictive Machine Learning                                                                                                                                                                       | Yes                  |
     | --tags or -t           | List of tags                                                                                                                                                                                      | Yes                  |
+    | --verbose or -v        | Log verbose mode                                                                                                                                                                                  | Yes                  |
 
 4. Run one of the examples.
 
