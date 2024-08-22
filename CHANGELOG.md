@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 1.4.0 - 2024-08-21
+
+* Update README.md
+* Support digest calculation bypass
+
+## 1.3.0 - 2024-08-20
+
+* Update README.md
+* Support CA cert import
+
 ## 1.2.0 - 2024-07-05
 
 * Support verbose scan result

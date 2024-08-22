@@ -13,7 +13,11 @@ async def main(args):
 
     tasks = set()
     for file_name in args.filename:
-        task = asyncio.create_task(amaas.grpc.aio.scan_file(handle, file_name=file_name, pml=args.pml, tags=args.tags, feedback=args.feedback))
+        task = asyncio.create_task(
+            amaas.grpc.aio.scan_file(
+                channel=handle, file_name=file_name, pml=args.pml,
+                tags=args.tags, feedback=args.feedback, verbose=args.verbose, digest=args.digest)
+        )
         tasks.add(task)
 
     s = time.perf_counter()
@@ -41,15 +45,19 @@ if __name__ == "__main__":
     parser.add_argument('--api_key', action='store',
                         help='api key for authentication')
     parser.add_argument('--tls', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable TLS gRPC ')
+                        help='enable/disable TLS gRPC ')
     parser.add_argument('--ca_cert', action='store',
                         help='CA certificate')
     parser.add_argument('--pml', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable predictive machine learning detection')
+                        help='enable/disable predictive machine learning detection')
     parser.add_argument('-t', '--tags', action='store', nargs='+',
                         help='list of tags')
     parser.add_argument('--feedback', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable feedback for predictive machine learning detection')
+                        help='enable/disable feedback for predictive machine learning detection')
+    parser.add_argument('-v', '--verbose', action=argparse.BooleanOptionalAction, default=False,
+                        help='enable/disable log verbose mode')
+    parser.add_argument('--digest', action=argparse.BooleanOptionalAction, default=True,
+                        help='enable/disable digest calculation')
 
     arguments = parser.parse_args()
 

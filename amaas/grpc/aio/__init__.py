@@ -40,12 +40,18 @@ async def quit(handle):
 
 
 async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifier: str, tags: List[str],
-                     pml: bool, feedback: bool, verbose: bool) -> str:
+                     pml: bool, feedback: bool, verbose: bool, digest: bool) -> str:
     _validate_tags(tags)
     stub = scan_pb2_grpc.ScanStub(channel)
     stats = {}
     result = None
     bulk = True
+    file_sha1 = ""
+    file_sha256 = ""
+
+    if digest:
+        file_sha1 = "sha1:" + _digest_hex(data_reader, "sha1")
+        file_sha256 = "sha256:" + _digest_hex(data_reader, "sha256")
 
     try:
         metadata = (
@@ -60,8 +66,8 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
                                chunk=None,
                                tags=tags,
                                trendx=pml,
-                               file_sha1="sha1:" + _digest_hex(data_reader, "sha1"),
-                               file_sha256="sha256:" + _digest_hex(data_reader, "sha256"),
+                               file_sha1=file_sha1,
+                               file_sha256=file_sha256,
                                bulk=bulk,
                                spn_feedback=feedback,
                                verbose=verbose)
@@ -140,7 +146,7 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
 
 
 async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
-                    pml: bool = False, feedback: bool = False, verbose: bool = False) -> str:
+                    pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
     try:
         f = open(file_name, "rb")
         fid = os.path.basename(file_name)
@@ -151,10 +157,10 @@ async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = Non
     except (PermissionError, IOError) as err:
         logger.debug("Permission error: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION, file_name)
-    return await _scan_data(channel, f, n, fid, tags, pml, feedback, verbose)
+    return await _scan_data(channel, f, n, fid, tags, pml, feedback, verbose, digest)
 
 
 async def scan_buffer(channel: grpc.Channel, bytes_buffer: bytes, uid: str, tags: List[str] = None,
-                      pml: bool = False, feedback: bool = False, verbose: bool = False) -> str:
+                      pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
     f = io.BytesIO(bytes_buffer)
-    return await _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose)
+    return await _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose, digest)
