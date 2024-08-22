@@ -122,13 +122,19 @@ def quit(handle):
 
 
 def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifier: str, tags: List[str],
-               pml: bool, feedback: bool, verbose: bool) -> str:
+               pml: bool, feedback: bool, verbose: bool, digest: bool) -> str:
     _validate_tags(tags)
     stub = scan_pb2_grpc.ScanStub(channel)
     pipeline = _Pipeline()
     stats = {}
     result = None
     bulk = True
+    file_sha1 = ""
+    file_sha256 = ""
+
+    if digest:
+        file_sha1 = "sha1:" + _digest_hex(data_reader, "sha1")
+        file_sha256 = "sha256:" + _digest_hex(data_reader, "sha256")
 
     try:
         metadata = (
@@ -143,8 +149,8 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
                                chunk=None,
                                trendx=pml,
                                tags=tags,
-                               file_sha1="sha1:" + _digest_hex(data_reader, "sha1"),
-                               file_sha256="sha256:" + _digest_hex(data_reader, "sha256"),
+                               file_sha1=file_sha1,
+                               file_sha256=file_sha256,
                                bulk=bulk,
                                spn_feedback=feedback,
                                verbose=verbose)
@@ -182,7 +188,7 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
 
 
 def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
-              pml: bool = False, feedback: bool = False, verbose: bool = False) -> str:
+              pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
     try:
         f = open(file_name, "rb")
         fid = os.path.basename(file_name)
@@ -194,10 +200,10 @@ def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
         logger.debug("Permission error: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION, file_name)
 
-    return _scan_data(channel, f, n, fid, tags, pml, feedback, verbose)
+    return _scan_data(channel, f, n, fid, tags, pml, feedback, verbose, digest)
 
 
 def scan_buffer(channel: grpc.Channel, bytes_buffer: bytes, uid: str, tags: List[str] = None,
-                pml: bool = False, feedback: bool = False, verbose: bool = False) -> str:
+                pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
     f = io.BytesIO(bytes_buffer)
-    return _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose)
+    return _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose, digest)

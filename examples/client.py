@@ -17,17 +17,19 @@ if __name__ == "__main__":
     parser.add_argument('--api_key', action='store',
                         help='api key for authentication')
     parser.add_argument('--tls', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable TLS gRPC ')
+                        help='enable/disable TLS gRPC ')
     parser.add_argument('--ca_cert', action='store',
                         help='CA certificate')
     parser.add_argument('--pml', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable predictive machine learning detection')
+                        help='enable/disable predictive machine learning detection')
     parser.add_argument('-t', '--tags', action='store', nargs='+',
                         help='list of tags')
     parser.add_argument('--feedback', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable feedback for predictive machine learning detection')
+                        help='enable/disable feedback for predictive machine learning detection')
     parser.add_argument('-v', '--verbose', action=argparse.BooleanOptionalAction, default=False,
-                        help='enable log verbose mode')
+                        help='enable/disable log verbose mode')
+    parser.add_argument('--digest', action=argparse.BooleanOptionalAction, default=True,
+                        help='enable/disable digest calculation')
 
     args = parser.parse_args()
 
@@ -39,7 +41,9 @@ if __name__ == "__main__":
     s = time.perf_counter()
 
     try:
-        result = amaas.grpc.scan_file(handle, file_name=args.filename, pml=args.pml, tags=args.tags, feedback=args.feedback, verbose=args.verbose)
+        result = amaas.grpc.scan_file(
+            channel=handle, file_name=args.filename, pml=args.pml,
+            tags=args.tags, feedback=args.feedback, verbose=args.verbose, digest=args.digest)
         elapsed = time.perf_counter() - s
         print(f"scan executed in {elapsed:0.2f} seconds.")
         print(result)

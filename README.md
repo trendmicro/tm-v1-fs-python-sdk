@@ -200,7 +200,7 @@ Creates a new instance of the grpc Channel, and provisions essential settings, i
 | region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                            |
 | enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
-| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                              |
+| ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                              |
 
 **_Return_**
 A grpc Channel instance
@@ -216,7 +216,7 @@ Creates a new instance of the grpc aio Channel, and provisions essential setting
 | region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                            |
 | enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
-| ca_cert    | `Optional` CA certificate used to connect to AMaaS server.                                                                                                                                              |
+| ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                              |
 
 **_Return_**
 A grpc aio Channel instance
@@ -237,6 +237,7 @@ Scan a file for malware and retrieves response data from the API.
 | pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
 | feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
 | verbose   | Enable log verbose mode                                                                                     |
+| digest    | Calculate digests for cache search and result lookup                                                        |
 
 **_Return_**
 String the scanned result in JSON format.
@@ -255,6 +256,7 @@ AsyncIO Scan a file for malware and retrieves response data from the API.
 | pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
 | feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
 | verbose   | Enable log verbose mode                                                                                     |
+| digest    | Calculate digests for cache search and result lookup                                                        |
 
 **_Return_**
 String the scanned result in JSON format.
