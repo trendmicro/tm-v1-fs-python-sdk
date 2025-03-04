@@ -197,7 +197,7 @@ Creates a new instance of the grpc Channel, and provisions essential settings, i
 
 | Parameter  | Description                                                                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
+| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                            |
 | enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
 | ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                              |
@@ -213,7 +213,7 @@ Creates a new instance of the grpc aio Channel, and provisions essential setting
 
 | Parameter  | Description                                                                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, etc. |
+| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                            |
 | enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
 | ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                              |

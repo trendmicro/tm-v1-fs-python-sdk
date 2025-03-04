@@ -19,6 +19,7 @@ AWS_DE_REGION = "eu-central-1"
 AWS_CA_REGION = "ca-central-1"
 AWS_TREND_REGION = "us-east-2"
 AWS_GB_REGION = "eu-west-2"
+AWS_AE_REGION = "me-central-1"
 C1_JP_REGION = "jp-1"
 C1_SG_REGION = "sg-1"
 C1_AU_REGION = "au-1"
@@ -28,10 +29,11 @@ C1_DE_REGION = "de-1"
 C1_CA_REGION = "ca-1"
 C1_TREND_REGION = "trend-us-1"
 C1_GB_REGION = "gb-1"
+C1_AE_REGION = "ae-1"
 
 C1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
              C1_US_REGION, C1_TREND_REGION]
-V1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_IN_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION]
+V1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_IN_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION, AWS_AE_REGION]
 SupportedV1Regions = V1Regions
 SupportedC1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
                       C1_US_REGION]
@@ -45,6 +47,7 @@ V1ToC1RegionMapping = {AWS_AU_REGION: C1_AU_REGION,
                        AWS_JP_REGION: C1_JP_REGION,
                        AWS_SG_REGION: C1_SG_REGION,
                        AWS_US_REGION: C1_US_REGION,
+                       AWS_AE_REGION: C1_AE_REGION,
                        }
 
 
@@ -94,6 +97,7 @@ def _init_by_region_util(region, api_key, enable_tls=True, ca_cert=None, is_aio_
         C1_JP_REGION: 'antimalware.jp-1.cloudone.trendmicro.com:443',
         C1_GB_REGION: 'antimalware.gb-1.cloudone.trendmicro.com:443',
         C1_CA_REGION: 'antimalware.ca-1.cloudone.trendmicro.com:443',
+        C1_AE_REGION: 'antimalware.ae-1.cloudone.trendmicro.com:443',
     }
 
     # make sure it is valid V1 or C1 region
