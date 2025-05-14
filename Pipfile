@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-protobuf = "~=4.21"
-grpcio = "~=1.51"
+protobuf = "~=5.29.4"
+grpcio = "~=1.71.0"
 
 [dev-packages]
-grpcio-tools = "~=1.51"
+grpcio-tools = "~=1.71.0"
 setuptools = "~=65.3"
 pytest = "~=7.1"
 twine = "~=4.0"
