@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.4.2 - 2025-05-13
+
+* Update the minimum supported version to Python 3.9
+* Update the maximum supported version to Python 3.13
+
 ## 1.4.1 - 2025-03-03
 
 * Support new region me-central-1
