@@ -9,7 +9,7 @@ Follow the steps below to set up your development environment and configure your
 
 ## Checking prerequisites
 
-- Python 3.7 or newer
+- Python 3.9 to 3.13
 - Trend Vision One account with a chosen region - for more information, see the [Trend Vision One documentation](https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-trend-micro-xdr-abou_001).
 - A Trend Vision One API key with proper role - for more information, see the [Trend Vision One API key documentation](https://docs.trendmicro.com/en-us/documentation/article/trend-vision-one-api-keys).
 
