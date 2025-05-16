@@ -34,7 +34,8 @@ jobs:
         python -m pip install build pipenv tox --user
 
     - name: Build a binary wheel and a source tarball
-      run: >-
+      run: |
+        pipenv --python 3.11
         make build
 
     - name: tox
