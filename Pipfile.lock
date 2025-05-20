@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d3cd7d00363c8c9807bc07299d3c2b5b74f587fae14d5b21576d07b852534155"
+            "sha256": "d724fa4375ff2c0aac57a3974442b42ac3e57cb9baf1a6d3abb9cbbfadc8ea0d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -553,11 +553,11 @@
         },
         "pkginfo": {
             "hashes": [
-                "sha256:5cd957824ac36f140260964eba3c6be6442a8359b8c48f4adf90210f33a04b7b",
-                "sha256:c783ac885519cab2c34927ccfa6bf64b5a704d7c69afaea583dd9b7afe969343"
+                "sha256:5df73835398d10db79f8eecd5cd86b1f6d29317589ea70796994d49399af6297",
+                "sha256:889a6da2ed7ffc58ab5b900d888ddce90bce912f2d2de1dc1c26f4cb9fe65097"
             ],
-            "markers": "python_version >= '3.8'",
-            "version": "==1.12.1.2"
+            "markers": "python_version >= '3.6'",
+            "version": "==1.10.0"
         },
         "platformdirs": {
             "hashes": [
@@ -776,12 +776,12 @@
         },
         "twine": {
             "hashes": [
-                "sha256:929bc3c280033347a00f847236564d1c52a3e61b1ac2516c97c48f3ceab756d8",
-                "sha256:9e102ef5fdd5a20661eb88fad46338806c3bd32cf1db729603fe3697b1bc83c8"
+                "sha256:215dbe7b4b94c2c50a7315c0275d2258399280fbb7d04182c7e55e24b5f93997",
+                "sha256:9aa0825139c02b3434d913545c7b847a21c835e11597f5255842d457da2322db"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.7'",
-            "version": "==4.0.2"
+            "markers": "python_version >= '3.8'",
+            "version": "==5.1.1"
         },
         "typing-extensions": {
             "hashes": [
