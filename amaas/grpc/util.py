@@ -33,7 +33,7 @@ C1_AE_REGION = "ae-1"
 
 C1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
              C1_US_REGION, C1_TREND_REGION]
-V1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_IN_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION, AWS_AE_REGION]
+V1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_IN_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION, AWS_AE_REGION, AWS_CA_REGION, AWS_GB_REGION]
 SupportedV1Regions = V1Regions
 SupportedC1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
                       C1_US_REGION]
@@ -41,14 +41,17 @@ SupportedC1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1
 AllRegions = C1Regions + V1Regions
 AllValidRegions = SupportedC1Regions + SupportedV1Regions
 
-V1ToC1RegionMapping = {AWS_AU_REGION: C1_AU_REGION,
-                       AWS_DE_REGION: C1_DE_REGION,
-                       AWS_IN_REGION: C1_IN_REGION,
-                       AWS_JP_REGION: C1_JP_REGION,
-                       AWS_SG_REGION: C1_SG_REGION,
-                       AWS_US_REGION: C1_US_REGION,
-                       AWS_AE_REGION: C1_AE_REGION,
-                       }
+V1ToC1RegionMapping = {
+    AWS_AU_REGION: C1_AU_REGION,
+    AWS_DE_REGION: C1_DE_REGION,
+    AWS_IN_REGION: C1_IN_REGION,
+    AWS_JP_REGION: C1_JP_REGION,
+    AWS_SG_REGION: C1_SG_REGION,
+    AWS_US_REGION: C1_US_REGION,
+    AWS_AE_REGION: C1_AE_REGION,
+    AWS_CA_REGION: C1_CA_REGION,
+    AWS_GB_REGION: C1_GB_REGION,
+}
 
 
 class _GrpcAuth(grpc.AuthMetadataPlugin):
