@@ -14,9 +14,9 @@ This guide outlines the steps to establish your development environment and conf
 
 Install the File Security SDK package with pip:
 
-   ```sh
-   python -m pip install visionone-filesecurity
-   ```
+```sh
+python -m pip install visionone-filesecurity
+```
 
 ## Obtain an API Key
 
@@ -52,19 +52,19 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
 
 3. Current Python examples support following command line arguments
 
-   | Command Line Arguments                     | Value                                                                                                                                                                                             | Optional             |
-   |--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|
-   | -f FILENAME, --filename FILENAME           | File to be scanned                                                                                                                                                                                | No                   |
-   | -a ADDR, --addr ADDR                       | Trend Vision One File Security server                                                                                                                                                             | Yes, either -r or -a |
-   | -r REGION, --region REGION                 | The region you obtained your API key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`, `ap-south-1`  | Yes, either -r or -a |
-   | --api_key API_KEY                          | Vision One API Key                                                                                                                                                                                | Yes                  |
-   | --tls, --no-tls                            | Enable or disable TLS                                                                                                                                                                             | Yes                  |
-   | --ca_cert CA_CERT                          | CA certificate used to connect to self hosted AMaaS                                                                                                                                               | Yes                  |
-   | --pml, --no-pml                            | Predictive Machine Learning                                                                                                                                                                       | Yes                  |
-   | -t TAGS [TAGS ...], --tags TAGS [TAGS ...] | List of tags                                                                                                                                                                                      | Yes                  |
-   | --feedback, --no-feedback                  | Feedback for Predictive Machine Learning detection                                                                                                                                                | Yes                  |
-   | -v, --verbose, --no-verbose                | Log verbose mode                                                                                                                                                                                  | Yes                  |
-   | --digest, --no-digest                      | Calculate digests for cache search and result lookup                                                                                                                                              | Yes                  |
+   | Command Line Arguments                     | Value                                                                                                                                                                                            | Optional             |
+   | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+   | -f FILENAME, --filename FILENAME           | File to be scanned                                                                                                                                                                               | No                   |
+   | -a ADDR, --addr ADDR                       | Trend Vision One File Security server                                                                                                                                                            | Yes, either -r or -a |
+   | -r REGION, --region REGION                 | The region you obtained your API key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`, `ap-south-1` | Yes, either -r or -a |
+   | --api_key API_KEY                          | Vision One API Key                                                                                                                                                                               | Yes                  |
+   | --tls, --no-tls                            | Enable or disable TLS                                                                                                                                                                            | Yes                  |
+   | --ca_cert CA_CERT                          | CA certificate used to connect to self hosted AMaaS                                                                                                                                              | Yes                  |
+   | --pml, --no-pml                            | Predictive Machine Learning                                                                                                                                                                      | Yes                  |
+   | -t TAGS [TAGS ...], --tags TAGS [TAGS ...] | List of tags                                                                                                                                                                                     | Yes                  |
+   | --feedback, --no-feedback                  | Feedback for Predictive Machine Learning detection                                                                                                                                               | Yes                  |
+   | -v, --verbose, --no-verbose                | Log verbose mode                                                                                                                                                                                 | Yes                  |
+   | --digest, --no-digest                      | Calculate digests for cache search and result lookup                                                                                                                                             | Yes                  |
 
 4. Run one of the examples.
 

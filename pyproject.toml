@@ -1,0 +1,50 @@
+[project]
+name = "visionone_filesecurity"
+version = _VERSION_
+requires-python = ">=3.9,<=3.13"
+authors = [{ name = "Trend Micro VisionOne File Security Team" }]
+description = "Trend Micro VisionOne File Security SDK for python"
+readme = "README.md"
+license = { file = "public/LICENSE" }
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+]
+urls = { Homepage = "https://github.com/trendmicro/tm-v1-fs-python-sdk" }
+
+dependencies = [
+    "protobuf~=5.29.4",
+    "grpcio~=1.71.0",
+]
+
+[dependency-groups]
+dev = [
+    "grpcio-tools~=1.51",
+    "setuptools~=65.3",
+    "pytest~=7.1",
+    "twine~=6.1.0",
+    "vistir==0.6.1",
+    "pytest-mock~=3.11",
+    "pytest-asyncio~=0.21",
+    "build==1.2.2"
+]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+
+[tool.setuptools]
+packages = { find = { where = ["."], exclude = ["tests*", "examples*"] } }
+include-package-data = true
+
+[tool.setuptools.package-data]
+amaas = ["grpc/protos/*"]
