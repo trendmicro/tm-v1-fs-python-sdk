@@ -31,9 +31,9 @@ The File Security SDK requires a valid application programming interface (API) k
 
 Install the File Security SDK package with pip:
 
-   ```sh
-   python -m pip install visionone-filesecurity
-   ```
+```sh
+python -m pip install visionone-filesecurity
+```
 
 ## Using File Security Python SDK
 
@@ -97,89 +97,92 @@ for scan_result in scan_results:
 ```
 
 ### Sample JSON Response
+
 #### Concise Format
 
 ```json
 {
-    "scannerVersion": "1.0.0-29",
-    "schemaVersion": "1.0.0",
-    "scanResult": 1,
-    "scanId": "74c7362b-8245-48be-81fe-b620a0409ef1",
-    "scanTimestamp": "2024-04-09T03:17:18.26Z",
-    "fileName": "EICAR_TEST_FILE-1.exe",
-    "foundMalwares": [
-        {
-            "fileName": "Eicar.exe",
-            "malwareName": "Eicar_test_file"
-        }
-    ],
-    "fileSHA1": "96f11a72c53aac4b24a5e4899bc9f2341d0b7a83",
-    "fileSHA256": "7dddcd0f64165f51291a41f49b6246cf85c3e6e599c096612cccce09566091f2"
+  "scannerVersion": "1.0.0-29",
+  "schemaVersion": "1.0.0",
+  "scanResult": 1,
+  "scanId": "74c7362b-8245-48be-81fe-b620a0409ef1",
+  "scanTimestamp": "2024-04-09T03:17:18.26Z",
+  "fileName": "EICAR_TEST_FILE-1.exe",
+  "foundMalwares": [
+    {
+      "fileName": "Eicar.exe",
+      "malwareName": "Eicar_test_file"
+    }
+  ],
+  "fileSHA1": "96f11a72c53aac4b24a5e4899bc9f2341d0b7a83",
+  "fileSHA256": "7dddcd0f64165f51291a41f49b6246cf85c3e6e599c096612cccce09566091f2"
 }
 ```
+
 #### Verbose Format
+
 ```json
 {
-    "scanType": "sdk",
-    "objectType": "file",
-    "timestamp": {
-        "start": "2024-04-26T18:43:48.639Z",
-        "end": "2024-04-26T18:43:49.941Z"
+  "scanType": "sdk",
+  "objectType": "file",
+  "timestamp": {
+    "start": "2024-04-26T18:43:48.639Z",
+    "end": "2024-04-26T18:43:49.941Z"
+  },
+  "schemaVersion": "1.0.0",
+  "scannerVersion": "1.0.0-1",
+  "fileName": "TRENDX_detect.exe",
+  "rsSize": 356352,
+  "scanId": "84947a19-b84a-4091-bb7d-8422ab5098a7",
+  "accountId": "7423a980-b5af-4e28-bf0b-b58cdf623bb8",
+  "result": {
+    "atse": {
+      "elapsedTime": 1004335,
+      "fileType": 7,
+      "fileSubType": 2,
+      "version": {
+        "engine": "23.57.0-1002",
+        "lptvpn": 301,
+        "ssaptn": 721,
+        "tmblack": 253,
+        "tmwhite": 227,
+        "macvpn": 904
+      },
+      "malwareCount": 0,
+      "malware": null,
+      "error": null,
+      "fileTypeName": "EXE",
+      "fileSubTypeName": "VSDT_EXE_W32"
     },
-    "schemaVersion": "1.0.0",
-    "scannerVersion": "1.0.0-1",
-    "fileName": "TRENDX_detect.exe",
-    "rsSize": 356352,
-    "scanId": "84947a19-b84a-4091-bb7d-8422ab5098a7",
-    "accountId": "7423a980-b5af-4e28-bf0b-b58cdf623bb8",
-    "result": {
-        "atse": {
-            "elapsedTime": 1004335,
-            "fileType": 7,
-            "fileSubType": 2,
-            "version": {
-                "engine": "23.57.0-1002",
-                "lptvpn": 301,
-                "ssaptn": 721,
-                "tmblack": 253,
-                "tmwhite": 227,
-                "macvpn": 904
-            },
-            "malwareCount": 0,
-            "malware": null,
-            "error": null,
-            "fileTypeName": "EXE",
-            "fileSubTypeName": "VSDT_EXE_W32"
-        },
-        "trendx": {
-            "elapsedTime": 296763,
-            "fileType": 7,
-            "fileSubType": 2,
-            "version": {
-                "engine": "23.57.0-1002",
-                "tmblack": 253,
-                "trendx": 331
-            },
-            "malwareCount": 1,
-            "malware": [
-                {
-                    "name": "Ransom.Win32.TRX.XXPE1",
-                    "fileName": "TRENDX_detect.exe",
-                    "type": "Ransom",
-                    "fileType": 7,
-                    "fileSubType": 2,
-                    "fileTypeName": "EXE",
-                    "fileSubTypeName": "VSDT_EXE_W32"
-                }
-            ],
-            "error": null,
-            "fileTypeName": "EXE",
-            "fileSubTypeName": "VSDT_EXE_W32"
+    "trendx": {
+      "elapsedTime": 296763,
+      "fileType": 7,
+      "fileSubType": 2,
+      "version": {
+        "engine": "23.57.0-1002",
+        "tmblack": 253,
+        "trendx": 331
+      },
+      "malwareCount": 1,
+      "malware": [
+        {
+          "name": "Ransom.Win32.TRX.XXPE1",
+          "fileName": "TRENDX_detect.exe",
+          "type": "Ransom",
+          "fileType": 7,
+          "fileSubType": 2,
+          "fileTypeName": "EXE",
+          "fileSubTypeName": "VSDT_EXE_W32"
         }
-    },
-    "fileSHA1": "b448479b0a6a5d387c71600e1b75700ba7f42b0a",
-    "fileSHA256": "4b7593109f81b5a770d440d8c28fa1457cd4b95d51b5d049fb301fc99c41da39",
-    "appName": "V1FS"
+      ],
+      "error": null,
+      "fileTypeName": "EXE",
+      "fileSubTypeName": "VSDT_EXE_W32"
+    }
+  },
+  "fileSHA1": "b448479b0a6a5d387c71600e1b75700ba7f42b0a",
+  "fileSHA256": "4b7593109f81b5a770d440d8c28fa1457cd4b95d51b5d049fb301fc99c41da39",
+  "appName": "V1FS"
 }
 ```
 
@@ -189,41 +192,41 @@ When malicious content is detected in the scanned object, `scanResult` will show
 
 ### Initialization
 
-#### ```def amaas.grpc.init_by_region(region: str, api_key: str, enable_tls: bool = True, ca_cert: str = None) -> grpc.Channel```
+#### `def amaas.grpc.init_by_region(region: str, api_key: str, enable_tls: bool = True, ca_cert: str = None) -> grpc.Channel`
 
 Creates a new instance of the grpc Channel, and provisions essential settings, including authentication/authorization credentials (API key), preferred service region, etc.
 
 **_Parameters_**
 
-| Parameter  | Description                                                                                                                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, etc. |
-| api_key    | Your own Vision One API Key.                                                                                                                                                                            |
-| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
-| ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                              |
+| Parameter  | Description                                                                                                                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| region     | The region you obtained your api key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, `ca-central-1`, `eu-west-2`,etc. |
+| api_key    | Your own Vision One API Key.                                                                                                                                                                                                                       |
+| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                           |
+| ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                                                             |
 
 **_Return_**
 A grpc Channel instance
 
-#### ```def amaas.grpc.aio.init_by_region(region: str, api_key: str, enable_tls: bool = True, ca_cert: str = None) -> grpc.aio.Channel```
+#### `def amaas.grpc.aio.init_by_region(region: str, api_key: str, enable_tls: bool = True, ca_cert: str = None) -> grpc.aio.Channel`
 
 Creates a new instance of the grpc aio Channel, and provisions essential settings, including authentication/authorization credentials (API key), preferred service region, etc.
 
 **_Parameters_**
 
-| Parameter  | Description                                                                                                                                                                                             |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| region     | The region you obtained your api key.  Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, etc. |
-| api_key    | Your own Vision One API Key.                                                                                                                                                                            |
-| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                |
-| ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                              |
+| Parameter  | Description                                                                                                                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| region     | The region you obtained your api key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`,`ca-central-1`, `eu-west-2`, etc. |
+| api_key    | Your own Vision One API Key.                                                                                                                                                                                                                       |
+| enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                           |
+| ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                                                             |
 
 **_Return_**
 A grpc aio Channel instance
 
 ### Scan
 
-#### ```def amaas.grpc.scan_file(handle: grpc.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False) -> str```
+#### `def amaas.grpc.scan_file(handle: grpc.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False) -> str`
 
 Scan a file for malware and retrieves response data from the API.
 
@@ -242,7 +245,7 @@ Scan a file for malware and retrieves response data from the API.
 **_Return_**
 String the scanned result in JSON format.
 
-#### ```def amaas.grpc.aio.scan_file(handle: grpc.aio.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False) -> str```
+#### `def amaas.grpc.aio.scan_file(handle: grpc.aio.Channel, file_name: str, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False) -> str`
 
 AsyncIO Scan a file for malware and retrieves response data from the API.
 
@@ -263,7 +266,7 @@ String the scanned result in JSON format.
 
 ### Cleaning Up
 
-#### ```def amaas.grpc.quit(handle: grpc.aio.Channel) -> None```
+#### `def amaas.grpc.quit(handle: grpc.aio.Channel) -> None`
 
 Remember to clean up the grpc Channel when you are done using it to release any allocated resources:
 
@@ -273,7 +276,7 @@ Remember to clean up the grpc Channel when you are done using it to release any 
 | --------- | --------------------------------------------------------- |
 | handle    | The grpc Channel instance created from the init function. |
 
-#### ```def amaas.grpc.aio.quit(handle: grpc.aio.Channel) -> None```
+#### `def amaas.grpc.aio.quit(handle: grpc.aio.Channel) -> None`
 
 Remember to clean up the grpc aio Channel when you are done using it to release any allocated resources:
 
