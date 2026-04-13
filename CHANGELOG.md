@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.4.5 - 2026-03-18
+
+- Support new region af-south-1
+
 ## 1.4.4 - 2026-01-19
 
 - Support new regions eu-west-2 and ca-central-1
