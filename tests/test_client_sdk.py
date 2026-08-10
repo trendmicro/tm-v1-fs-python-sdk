@@ -241,6 +241,46 @@ def test_generate_message_unknwon_stage():
 
 
 #
+# Testing that _Pipeline.get_message returns None on timeout
+#
+def test_pipeline_get_message_timeout():
+    pipeline = amaas.grpc._Pipeline()
+    result = pipeline.get_message(timeout=0.1)
+    assert result is None
+
+
+#
+# Testing that _generate_messages yields heartbeat when pipeline times out
+#
+def test_generate_message_heartbeat():
+    pipeline = amaas.grpc._Pipeline()
+    stats = {}
+    f = open(TEST_DATA_FILE_NAME, "rb")
+    size = os.stat(TEST_DATA_FILE_NAME).st_size
+
+    # Set initial message
+    server_resp = amaas.grpc.scan_pb2.C2S(
+        stage=amaas.grpc.scan_pb2.STAGE_INIT,
+        file_name=TEST_DATA_FILE_NAME,
+        rs_size=size,
+        offset=0,
+        chunk=None,
+        tags=None,
+    )
+    pipeline.set_message(server_resp)
+
+    with patch("amaas.grpc.heartbeat_interval_in_seconds", 0.1):
+        gen = amaas.grpc._generate_messages(pipeline, f, True, stats)
+        # First message should be the INIT message
+        c2s_msg = next(gen)
+        assert c2s_msg.stage == amaas.grpc.scan_pb2.STAGE_INIT
+
+        # Next message should be a heartbeat (since no pipeline message is available)
+        c2s_msg = next(gen)
+        assert c2s_msg.stage == amaas.grpc.scan_pb2.STAGE_HEARTBEAT
+
+
+#
 # Testing the SDK scan_file method sucessfully scans a file with no virus.
 #
 def test_scan_file_success():
@@ -248,6 +288,16 @@ def test_scan_file_success():
     handle = grpc.insecure_channel(f"localhost:{SERVER_PORT}")
     response = amaas.grpc.scan_file(handle, dir_path + "/fake_server_cert.pem")
     assert json.loads(response)["scanResult"] == 0
+
+
+def test_scan_file_identifier_is_full_path():
+    full_path = os.path.join(os.path.dirname(__file__), "fake_server_cert.pem")
+    assert os.path.basename(full_path) != full_path
+    handle = grpc.insecure_channel(f"localhost:{SERVER_PORT}")
+    with patch("amaas.grpc._scan_data") as scan_data_mock:
+        amaas.grpc.scan_file(handle, full_path)
+    identifier = scan_data_mock.call_args.args[3]
+    assert identifier == full_path
 
 
 #

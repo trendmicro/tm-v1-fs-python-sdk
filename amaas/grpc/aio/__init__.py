@@ -1,3 +1,4 @@
+import asyncio
 import io
 import os
 from typing import BinaryIO, List
@@ -22,6 +23,7 @@ logger.setLevel(LOG_LEVEL)
 logger.propagate = False
 
 timeout_in_seconds = int(os.environ.get('TM_AM_SCAN_TIMEOUT_SECS', 300))
+heartbeat_interval_in_seconds = int(os.environ.get('TM_AM_HEARTBEAT_INTERVAL_SECS', 30))
 
 
 def init_by_region(region, api_key, enable_tls=True, ca_cert=None):
@@ -75,7 +77,15 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
         await call.write(request)
 
         while True:
-            response = await call.read()
+            while True:
+                try:
+                    response = await asyncio.wait_for(
+                        call.read(), timeout=heartbeat_interval_in_seconds
+                    )
+                    break
+                except asyncio.TimeoutError:
+                    logger.debug("sending heartbeat to keep connection alive")
+                    await call.write(scan_pb2.C2S(stage=scan_pb2.STAGE_HEARTBEAT))
 
             if response.cmd == scan_pb2.CMD_RETR:
                 if response.stage != scan_pb2.STAGE_RUN:
@@ -149,7 +159,7 @@ async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = Non
                     pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
     try:
         f = open(file_name, "rb")
-        fid = os.path.basename(file_name)
+        fid = file_name
         n = os.stat(file_name).st_size
     except FileNotFoundError as err:
         logger.debug("File not exist: " + str(err))
