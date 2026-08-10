@@ -23,6 +23,7 @@ logger.setLevel(LOG_LEVEL)
 logger.propagate = False
 
 timeout_in_seconds = int(os.environ.get('TM_AM_SCAN_TIMEOUT_SECS', 300))
+heartbeat_interval_in_seconds = int(os.environ.get('TM_AM_HEARTBEAT_INTERVAL_SECS', 30))
 
 
 class _Pipeline:
@@ -36,8 +37,10 @@ class _Pipeline:
         self._consumer_lock = threading.Lock()
         self._consumer_lock.acquire()
 
-    def get_message(self):
-        self._consumer_lock.acquire()
+    def get_message(self, timeout=None):
+        acquired = self._consumer_lock.acquire(timeout=timeout)
+        if not acquired:
+            return None
         message = self._message
         self._producer_lock.release()
         return message
@@ -81,7 +84,13 @@ def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, s
             yield response
 
         responses.clear()
-        message = pipeline.get_message()
+        while True:
+            message = pipeline.get_message(timeout=heartbeat_interval_in_seconds)
+            if message is None:
+                logger.debug("sending heartbeat to keep connection alive")
+                yield scan_pb2.C2S(stage=scan_pb2.STAGE_HEARTBEAT)
+                continue
+            break
 
         if message.stage == scan_pb2.STAGE_INIT:
             logger.debug("stage INIT")
@@ -191,7 +200,7 @@ def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
               pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
     try:
         f = open(file_name, "rb")
-        fid = os.path.basename(file_name)
+        fid = file_name
         n = os.stat(file_name).st_size
     except FileNotFoundError as err:
         logger.debug("File not exist: " + str(err))

@@ -1,3 +1,4 @@
+import asyncio
 import grpc
 import json
 import os
@@ -5,7 +6,7 @@ import pytest
 import random
 import tempfile
 from concurrent import futures
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock, MagicMock
 
 import amaas.grpc.aio
 from .mock_server import MockScanServicer
@@ -168,3 +169,51 @@ async def test_scan_buffer_exceptions(error_type, expected_exception):
             await amaas.grpc.aio.scan_buffer(handle, buffer, error_type)
         for cnt in range(len(expected_exception)):
             assert exc_info.value.args[cnt] == expected_exception[cnt]
+
+
+#
+# Testing that aio _scan_data sends heartbeat when call.read() times out
+#
+@pytest.mark.asyncio
+async def test_aio_heartbeat():
+    read_count = 0
+    quit_response = amaas.grpc.scan_pb2.S2C(
+        cmd=amaas.grpc.scan_pb2.CMD_QUIT,
+        stage=amaas.grpc.scan_pb2.STAGE_FINI,
+        result='{"scanResult": 0}',
+    )
+
+    # Mock call.read(): simulate server not responding on first read (triggers heartbeat),
+    # then returning CMD_QUIT on second read to end the scan normally.
+    async def mock_read():
+        nonlocal read_count
+        read_count += 1
+        if read_count == 1:
+            await asyncio.sleep(10)  # will be cancelled by wait_for timeout
+        return quit_response
+
+    # Mock the gRPC call object returned by stub.Run()
+    mock_call = AsyncMock()
+    mock_call.read = mock_read
+    mock_call.write = AsyncMock()
+    mock_call.done_writing = AsyncMock()
+
+    # Mock scan_pb2_grpc.ScanStub so no real gRPC connection is made
+    mock_stub = MagicMock()
+    mock_stub.Run = MagicMock(return_value=mock_call)
+
+    with patch("amaas.grpc.aio.scan_pb2_grpc.ScanStub", return_value=mock_stub):
+        with patch("amaas.grpc.aio.heartbeat_interval_in_seconds", 0.1):
+            handle = MagicMock()  # Mock grpc.aio.Channel
+            result = await amaas.grpc.aio.scan_buffer(
+                handle, b"test data", "test.txt", digest=False
+            )
+
+    # Verify heartbeat was sent
+    heartbeat_calls = [
+        c
+        for c in mock_call.write.call_args_list
+        if c[0][0].stage == amaas.grpc.scan_pb2.STAGE_HEARTBEAT
+    ]
+    assert len(heartbeat_calls) == 1
+    assert json.loads(result)["scanResult"] == 0

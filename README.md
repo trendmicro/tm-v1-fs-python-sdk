@@ -200,7 +200,7 @@ Creates a new instance of the grpc Channel, and provisions essential settings, i
 
 | Parameter  | Description                                                                                                                                                                                                                                        |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| region     | The region you obtained your api key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, `ca-central-1`, `eu-west-2`, `af-south-1`,etc. |
+| region     | The region you obtained your api key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, `ca-central-1`, `eu-west-2`, `af-south-1`, `ap-southeast-3`,etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                                                                       |
 | enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                           |
 | ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                                                             |
@@ -216,7 +216,7 @@ Creates a new instance of the grpc aio Channel, and provisions essential setting
 
 | Parameter  | Description                                                                                                                                                                                                                                        |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| region     | The region you obtained your api key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, `ca-central-1`, `eu-west-2`, `af-south-1`, etc. |
+| region     | The region you obtained your api key. Value provided must be one of the Vision One regions, e.g. `us-east-1`, `eu-central-1`, `ap-northeast-1`, `ap-southeast-2`, `ap-southeast-1`, `ap-south-1`, `me-central-1`, `ca-central-1`, `eu-west-2`, `af-south-1`, `ap-southeast-3`, etc. |
 | api_key    | Your own Vision One API Key.                                                                                                                                                                                                                       |
 | enable_tls | Enable or disable TLS. TLS should always be enabled when connecting to the AMaaS server. For more information, see the 'Ensuring Secure Communication with TLS' section.                                                                           |
 | ca_cert    | `Optional` CA certificate used to connect to self hosted AMaaS server.                                                                                                                                                                             |
@@ -285,6 +285,69 @@ Remember to clean up the grpc aio Channel when you are done using it to release 
 | Parameter | Description                                                   |
 | --------- | ------------------------------------------------------------- |
 | handle    | The grpc aio Channel instance created from the init function. |
+
+## Error Handling
+
+The File Security Python SDK raises `amaas.grpc.exception.AMaasException` for every error condition produced by `amaas.grpc` and `amaas.grpc.aio`. Each exception carries an `error_code` (a member of the `AMaasErrorCode` enum) and a formatted `message`; `str(exception)` renders both as `<CODE_NAME>: <message>`.
+
+```python
+from amaas.grpc.exception import AMaasException
+
+try:
+    result = amaas.grpc.scan_file(handle, file_name=filename, tags=tags)
+except AMaasException as e:
+    print(e.error_code, e.message)
+except Exception as e:
+    print(e)
+```
+
+Some conditions are detected by the SDK itself, independently of any network call: an unsupported region, a missing/unreadable file, invalid tags, or an unexpected message in the scan protocol stream. Everything else comes from the File Security service: the SDK catches `grpc.RpcError` (`grpc.aio.AioRpcError` in the asyncio client) and re-raises it as an `AMaasException`.
+
+For most service errors the SDK preserves the gRPC status code and message text exactly as sent by the service; for two conditions — authentication failures and rate limiting — the SDK discards the service's own message and substitutes a fixed string of its own. Both the synchronous client and the asyncio client apply the same mapping.
+
+The **Source** column classifies each error:
+
+- **SDK-native** — produced entirely by the SDK on the client side, without a network call (unsupported region, missing/unreadable file, invalid tags, unexpected protocol message).
+- **SDK-mapped** — triggered by a gRPC response from the service, but the caller-visible message is a fixed string produced by the SDK (authentication failures and rate limiting).
+- **Service** — the service's gRPC code and message are relayed to the caller unchanged (via `MSG_ID_GRPC_ERROR`).
+
+| gRPC status code (as received) | `AMaasErrorCode` / message seen by the caller | Cause | Source |
+| --- | --- | --- | --- |
+| — | `MSG_ID_ERR_INVALID_REGION`: `<region> is not a supported region, region value should be one of <list>` | Region passed to `init_by_region` is not a supported Vision One region | SDK-native |
+| — | `MSG_ID_ERR_FILE_NOT_FOUND`: `Failed to open file. No such file or directory <path>.` | File passed to `scan_file` does not exist | SDK-native |
+| — | `MSG_ID_ERR_FILE_NO_PERMISSION`: `Failed to open file. Permission denied to open <path>.` | No OS permission to read the file | SDK-native |
+| — | `MSG_ID_ERR_INVALID_TAG`: `Invalid tag format: <tag>.` | A tag is empty or longer than 63 characters, checked client-side before the scan request is sent | SDK-native |
+| — | `MSG_ID_ERR_TAG_NUMBER_EXCEED`: `Too many tags: <n>.` | More than 8 tags supplied, checked client-side before the scan request is sent | SDK-native |
+| — | `MSG_ID_ERR_UNKNOWN_CMD` / `MSG_ID_ERR_UNKNOWN_STAGE` / `MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE`: `Received unknown command from server: <n>` / `Received unknown stage from server: <n>` / `Received unexpected command <n> and stage <n>.` | The scan protocol stream produced a command/stage the SDK does not recognize | SDK-native |
+| — | `MSG_ID_ERR_UNEXPECTED_ERROR`: `Unexpected error encountered. <detail>` | Any other, non-gRPC exception raised while scanning (also used internally if an unsupported hash algorithm is requested) | SDK-native |
+| `Unauthenticated` (16) | `MSG_ID_ERR_KEY_AUTH_FAILED`: `Invalid token or Api Key.` | Service rejected the request as `Unauthenticated` — covers a missing key, an invalid/expired key, and an account without file-scan permission. The SDK substitutes this fixed string for all three cases; the service's actual message is not shown to the caller | SDK-mapped |
+| `Internal` (13), details containing `429` ¹ | `MSG_ID_ERR_RATE_LIMIT_EXCEEDED`: `Raised by the SDK library to indicate http 429 too many request error.` | Rate limit exceeded. The SDK detects this by scanning the raw error text for the substring `429` and substitutes this fixed string; the service's actual message is not shown to the caller | SDK-mapped |
+| `InvalidArgument` (3) | `MSG_ID_GRPC_ERROR`: `Too many tags. Decrease to eight tags or less.` | Too many tags (only reaches the service if the SDK's own client-side check didn't already catch it) | Service |
+| `InvalidArgument` (3) | `MSG_ID_GRPC_ERROR`: `Tag is too long. Decrease length to 63 characters or less.` | A tag longer than 63 characters (only reaches the service if the client-side check didn't already catch it) | Service |
+| `InvalidArgument` (3) | `MSG_ID_GRPC_ERROR`: `Tag is empty. Remove the tag or add at least one character.` | An empty tag | Service |
+| `InvalidArgument` (3) | `MSG_ID_GRPC_ERROR`: `cloudAccountId contains illegal characters (#, @)` | Illegal characters in a `cloudAccountId` tag | Service |
+| `InvalidArgument` (3) | `MSG_ID_GRPC_ERROR`: `Prefix format or length of SHA1 from the SDK is incorrect. Contact Support.` / `SHA1 format from the SDK is incorrect. Contact Support.` | Malformed SHA1 digest sent by the SDK | Service |
+| `InvalidArgument` (3) | `MSG_ID_GRPC_ERROR`: `Prefix format or length of SHA256 from the SDK is incorrect. Contact Support.` / `SHA256 format from the SDK is incorrect. Contact Support.` | Malformed SHA256 digest sent by the SDK | Service |
+| `NotFound` (5) | `MSG_ID_GRPC_ERROR`: `Customer ID not found. Contact Support.` | Account / customer ID not found | Service |
+| `PermissionDenied` (7) | `MSG_ID_GRPC_ERROR`: `SDK feature is not enabled for this account. Contact your administrator to enable the SDK feature.` | The SDK feature is not enabled for the account | Service |
+| `ResourceExhausted` (8) | `MSG_ID_GRPC_ERROR`: `This account has performed five scans in the last hour. Purchase and allocate credits to File Security or wait an hour to make five more scans.` | Hourly scan quota exhausted (Essential accounts) | Service |
+| `ResourceExhausted` (8) | `MSG_ID_GRPC_ERROR`: `file size <n> is over maximum allowed size <m>` | Scanned file/buffer exceeds the maximum allowed size | Service |
+| `ResourceExhausted` (8) | `MSG_ID_GRPC_ERROR`: `Cannot allocate resource. Try again later. If the issue persists, contact Support.` | Service could not allocate a scan resource | Service |
+| `FailedPrecondition` (9) | `MSG_ID_GRPC_ERROR`: `Incorrect stage <n> from the SDK. Contact Support.` | Incorrect protocol stage | Service |
+| `Unimplemented` (12) | `MSG_ID_GRPC_ERROR`: `Predictive Machine Learning is not supported. Contact Support.` | PML requested but not supported for the account/region | Service |
+| `Internal` (13) | `MSG_ID_GRPC_ERROR`: `Failed to retrieve metadata. Try again later. If the issue persists, contact Support.` | Service could not retrieve request metadata | Service |
+| `Internal` (13) | `MSG_ID_GRPC_ERROR`: `Network connection error. Try again later. If the issue persists, contact Support.` | Service-side network / connection error | Service |
+| `Internal` (13) | `MSG_ID_GRPC_ERROR`: `Internal error. Try again later. If the issue persists, contact Support.` | Generic internal service error | Service |
+| `Internal` (13) | `MSG_ID_GRPC_ERROR`: `Missing preamble information from the SDK. Contact Support.` | Missing preamble information in the scan request | Service |
+| `Internal` (13) | `MSG_ID_GRPC_ERROR`: `Unclear scan result: <detail>. Contact Support.` | Service could not parse the scan result | Service |
+| any other code (preserved) | `MSG_ID_GRPC_ERROR`: `Received gRPC status code: <code>, msg: <details>.` | Any other error relayed from the service, with the numeric gRPC code and message exactly as the service sent them | Service |
+
+**Notes**
+
+1. The service currently signals rate limiting with `Internal` and a details string containing `Http Error Code: 429`; the SDK matches on that substring rather than on a dedicated gRPC code, so this row is reached before the generic `MSG_ID_GRPC_ERROR` case below.
+2. Rows marked `MSG_ID_GRPC_ERROR` are relayed from the service with the gRPC status code and message preserved exactly; `str(exception)` renders them as `MSG_ID_GRPC_ERROR: Received gRPC status code: <code>, msg: <message>.`. These messages are owned by the File Security service and may change independently of the SDK.
+   The Python SDK does not expose Encode/Decode operations, so the service's encode/decode messages cannot occur here.
+3. Engine findings such as `ATSE_*` codes are not errors — they are returned inside a successful scan result payload, not raised as an exception.
 
 ## Environment Variables
 

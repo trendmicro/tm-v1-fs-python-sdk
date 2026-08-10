@@ -3,7 +3,7 @@ import random
 import grpc
 
 from amaas.grpc.protos.scan_pb2_grpc import ScanServicer
-from amaas.grpc.protos.scan_pb2 import STAGE_INIT, STAGE_FINI, STAGE_RUN
+from amaas.grpc.protos.scan_pb2 import STAGE_INIT, STAGE_FINI, STAGE_RUN, STAGE_HEARTBEAT
 from amaas.grpc.protos.scan_pb2 import CMD_QUIT, CMD_RETR
 from amaas.grpc.protos.scan_pb2 import S2C
 
@@ -51,6 +51,8 @@ class MockScanServicer(ScanServicer):
     def Run(self, request_iterator, context):
         count = 0
         for req in request_iterator:
+            if req.stage == STAGE_HEARTBEAT:
+                continue
             if req.stage == STAGE_INIT:
                 self.fsize = req.rs_size
                 self.identifier = req.file_name
