@@ -11,11 +11,16 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      # Set up python 3.9
+      # Set up every interpreter in the tox.ini envlist. The *last* entry becomes
+      # the default `python`, so keep 3.9 last: `make test` stays on the
+      # requires-python = ">=3.9" floor, and only tox reaches for 3.10/3.11.
       - name: Prepare python env
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: |
+            3.11
+            3.10
+            3.9
 
       # Install uv
       - name: Install uv
@@ -24,3 +29,11 @@ jobs:
       # Pack and publish Python SDK
       - name: Exec py client unit test
         run: make test
+
+      # Exercise tox on every PR instead of only at release time.
+      # tox >= 4.31 requires Python >= 3.10, so install it with 3.11 to resolve
+      # the same tox release the publish workflow uses.
+      - name: Install tox
+        run: python3.11 -m pip install tox
+      - name: Run tox
+        run: python3.11 -m tox
