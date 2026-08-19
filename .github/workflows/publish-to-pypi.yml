@@ -44,10 +44,6 @@ jobs:
           uv python pin 3.11
           make build
 
-      - name: tox
-        run: >-
-          tox
-
       - name: Publish distribution 📦 to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

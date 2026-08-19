@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 1.4.7 - 2026-08-10
+## 1.4.8 - 2026-08-19
 
 - Support new region ap-southeast-3 (Indonesia)
 - Support scan gateway for FSCS and FSVA
