@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 1.5.0 - 2026-09-15
+
+- Add `scan_reader` (sync and aio) for scanning a data source through a reader implementing
+  the new `amaas.grpc.reader.AMaasReader` protocol, mirroring the Go SDK's `ScanReader` and
+  `AmaasClientReader`. The SDK pulls only the chunks the scan engine requests, so remote
+  sources (e.g. S3 objects) need not be downloaded in full. `digest` defaults to `False`
+  because digest calculation reads the whole data source.
+- Add an S3 object scan example under `examples/scan-s3obj` demonstrating a reader backed
+  by ranged S3 GETs.
+- Add an Azure Blob scan example under `examples/scan-azureblob` demonstrating a reader backed
+  by ranged blob downloads, with SAS token or `DefaultAzureCredential` auth.
+- Enforce the reader contract like the Go SDK: `read_bytes` is never called beyond `data_size`, and
+  a short read raises the new `MSG_ID_ERR_RETRIEVE_DATA` error instead of uploading truncated data
+  or hashing a truncated source for `digest=True`.
+- Compute sha1 and sha256 digests in a single pass, halving the reads a remote reader makes when
+  `digest=True`.
+- `scan_file` now reports `MSG_ID_ERR_UNEXPECTED_ERROR` for `OSError` other than permission-denied;
+  only `PermissionError` maps to `MSG_ID_ERR_FILE_NO_PERMISSION`.
+
 ## 1.4.8 - 2026-08-19
 
 - Support new region ap-southeast-3 (Indonesia)

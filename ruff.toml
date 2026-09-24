@@ -1,0 +1,14 @@
+# Ruff replaces flake8 with the same rule set (pycodestyle E/W + pyflakes F).
+# Kept in ruff.toml instead of pyproject.toml because pyproject.toml holds a
+# `version = _VERSION_` placeholder until `make version` fills it in, which
+# makes it invalid TOML for tools that run before the fill-in (e.g. tox lint).
+target-version = "py39"
+line-length = 120
+
+[lint]
+select = ["E", "W", "F"]
+ignore = [
+    "E203", # whitespace before :
+    "E741", # ambiguous variable name
+    "E501", # line too long
+]

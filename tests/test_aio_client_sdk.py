@@ -1,18 +1,17 @@
 import asyncio
-import grpc
 import json
 import os
-import pytest
 import random
 import tempfile
 from concurrent import futures
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import amaas.grpc.aio
-from .mock_server import MockScanServicer
-from amaas.grpc.exception import AMaasErrorCode
-from amaas.grpc.exception import AMaasException
+import grpc
+import pytest
+from amaas.grpc.exception import AMaasErrorCode, AMaasException
 
+from .mock_server import MockScanServicer
 
 NUM_DATA_LOOP = 128
 _, TEST_DATA_FILE_NAME = tempfile.mkstemp()
@@ -104,6 +103,19 @@ async def test_scan_file_no_permission():
     assert exc_info.value.args[0] == AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION
     assert exc_info.value.args[1] == NOT_PERMISSION_FILE
     os.remove(NOT_PERMISSION_FILE)
+
+
+#
+# Testing the SDK scan_file method failed with MSG_ID_ERR_UNEXPECTED_ERROR
+# for an OSError that is neither not-found nor permission-denied.
+#
+@pytest.mark.asyncio
+async def test_scan_file_other_os_error():
+    handle = grpc.aio.insecure_channel(f"localhost:{SERVER_PORT}")
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with pytest.raises(AMaasException) as exc_info:
+        await amaas.grpc.scan_file(handle, dir_path)
+    assert exc_info.value.args[0] == AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR
 
 
 #

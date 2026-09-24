@@ -1,29 +1,31 @@
-import threading
+import io
 import logging
-from typing import BinaryIO, List
+import os
+import threading
+from typing import BinaryIO
 
 import grpc
-import os
-import io
 
-from .protos import scan_pb2
-from .protos import scan_pb2_grpc
-from .exception import AMaasException
-from .exception import AMaasErrorCode
-from .util import _init_by_region_util
-from .util import _init_util
-from .util import _validate_tags
-from .util import _digest_hex
-from .util import APP_NAME_HEADER, APP_NAME_FILE_SCAN
+from .exception import AMaasErrorCode, AMaasException
+from .protos import scan_pb2, scan_pb2_grpc
+from .reader import AMaasReader, _ReaderAdapter
+from .util import (
+    APP_NAME_FILE_SCAN,
+    APP_NAME_HEADER,
+    _digest_hex_pair,
+    _init_by_region_util,
+    _init_util,
+    _validate_tags,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
-LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 logger.setLevel(LOG_LEVEL)
 logger.propagate = False
 
-timeout_in_seconds = int(os.environ.get('TM_AM_SCAN_TIMEOUT_SECS', 300))
-heartbeat_interval_in_seconds = int(os.environ.get('TM_AM_HEARTBEAT_INTERVAL_SECS', 30))
+timeout_in_seconds = int(os.environ.get("TM_AM_SCAN_TIMEOUT_SECS", 300))
+heartbeat_interval_in_seconds = int(os.environ.get("TM_AM_HEARTBEAT_INTERVAL_SECS", 30))
 
 
 class _Pipeline:
@@ -59,7 +61,9 @@ def init(host, api_key=None, enable_tls=False, ca_cert=None):
     return _init_util(host, api_key, enable_tls, ca_cert, False)
 
 
-def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, stats: dict) -> None:
+def _generate_messages(
+    pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, stats: dict
+) -> None:
     responses = []
 
     while True:
@@ -70,7 +74,14 @@ def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, s
                 offset = r[1]
                 length = r[2]
                 data_reader.seek(offset)
-                chunk = data_reader.read(length)
+                try:
+                    chunk = data_reader.read(length)
+                except AMaasException as err:
+                    # The request iterator runs on a gRPC consumer thread, so
+                    # this exception is swallowed there; stash it for the
+                    # response loop to re-raise in the caller's thread.
+                    stats["reader_error"] = err
+                    raise
                 response = scan_pb2.C2S(
                     stage=scan_pb2.STAGE_RUN,
                     file_name=None,
@@ -80,7 +91,9 @@ def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, s
                 )
                 stats["total_upload"] = stats.get("total_upload", 0) + len(chunk)
             else:
-                raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, "None", r[0])
+                raise AMaasException(
+                    AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, "None", r[0]
+                )
             yield response
 
         responses.clear()
@@ -97,7 +110,11 @@ def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, s
             responses.append(("INIT", message))
         elif message.stage == scan_pb2.STAGE_RUN:
             if message.cmd != scan_pb2.CMD_RETR:
-                raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, message.cmd, message.stage)
+                raise AMaasException(
+                    AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE,
+                    message.cmd,
+                    message.stage,
+                )
 
             length = []
             offset = []
@@ -113,11 +130,17 @@ def _generate_messages(pipeline: _Pipeline, data_reader: BinaryIO, bulk: bool, s
                 length.append(message.length)
 
             for i in range(len(length)):
-                logger.debug(f"stage RUN, try to read {length[i]} at offset {offset[i]}")
+                logger.debug(
+                    f"stage RUN, try to read {length[i]} at offset {offset[i]}"
+                )
                 responses.append(("RUN", offset[i], length[i]))
         elif message.stage == scan_pb2.STAGE_FINI:
             if message.cmd != scan_pb2.CMD_QUIT:
-                raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, message.cmd, message.stage)
+                raise AMaasException(
+                    AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE,
+                    message.cmd,
+                    message.stage,
+                )
 
             logger.debug("final stage, quit generating C2S messages...")
             break
@@ -130,8 +153,17 @@ def quit(handle):
     handle.close()
 
 
-def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifier: str, tags: List[str],
-               pml: bool, feedback: bool, verbose: bool, digest: bool) -> str:
+def _scan_data(
+    channel: grpc.Channel,
+    data_reader: BinaryIO,
+    size: int,
+    identifier: str,
+    tags: list[str],
+    pml: bool,
+    feedback: bool,
+    verbose: bool,
+    digest: bool,
+) -> str:
     _validate_tags(tags)
     stub = scan_pb2_grpc.ScanStub(channel)
     pipeline = _Pipeline()
@@ -142,27 +174,31 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
     file_sha256 = ""
 
     if digest:
-        file_sha1 = "sha1:" + _digest_hex(data_reader, "sha1")
-        file_sha256 = "sha256:" + _digest_hex(data_reader, "sha256")
+        sha1_hex, sha256_hex = _digest_hex_pair(data_reader)
+        file_sha1 = "sha1:" + sha1_hex
+        file_sha256 = "sha256:" + sha256_hex
 
     try:
-        metadata = (
-            (APP_NAME_HEADER, APP_NAME_FILE_SCAN),
+        metadata = ((APP_NAME_HEADER, APP_NAME_FILE_SCAN),)
+        responses = stub.Run(
+            _generate_messages(pipeline, data_reader, bulk, stats),
+            timeout=timeout_in_seconds,
+            metadata=metadata,
         )
-        responses = stub.Run(_generate_messages(pipeline, data_reader, bulk, stats), timeout=timeout_in_seconds,
-                             metadata=metadata)
-        message = scan_pb2.C2S(stage=scan_pb2.STAGE_INIT,
-                               file_name=identifier,
-                               rs_size=size,
-                               offset=0,
-                               chunk=None,
-                               trendx=pml,
-                               tags=tags,
-                               file_sha1=file_sha1,
-                               file_sha256=file_sha256,
-                               bulk=bulk,
-                               spn_feedback=feedback,
-                               verbose=verbose)
+        message = scan_pb2.C2S(
+            stage=scan_pb2.STAGE_INIT,
+            file_name=identifier,
+            rs_size=size,
+            offset=0,
+            chunk=None,
+            trendx=pml,
+            tags=tags,
+            file_sha1=file_sha1,
+            file_sha256=file_sha256,
+            bulk=bulk,
+            spn_feedback=feedback,
+            verbose=verbose,
+        )
 
         pipeline.set_message(message)
 
@@ -176,7 +212,9 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
                 break
             else:
                 logger.debug("unknown command...")
-                raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNKNOWN_CMD, response.cmd)
+                raise AMaasException(
+                    AMaasErrorCode.MSG_ID_ERR_UNKNOWN_CMD, response.cmd
+                )
 
         total_upload = stats.get("total_upload", 0)
         logger.debug(f"total upload {total_upload} bytes")
@@ -184,20 +222,38 @@ def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifi
     except AMaasException:
         raise
     except grpc.RpcError as rpc_error:
+        reader_error = stats.get("reader_error")
+        if reader_error is not None:
+            raise reader_error
         if "429" in str(rpc_error):
             raise AMaasException(AMaasErrorCode.MSG_ID_ERR_RATE_LIMIT_EXCEEDED)
         elif rpc_error.code() == grpc.StatusCode.UNAUTHENTICATED:
             raise AMaasException(AMaasErrorCode.MSG_ID_ERR_KEY_AUTH_FAILED)
         else:
-            raise AMaasException(AMaasErrorCode.MSG_ID_GRPC_ERROR, rpc_error.code().value[0], rpc_error.details())
+            raise AMaasException(
+                AMaasErrorCode.MSG_ID_GRPC_ERROR,
+                rpc_error.code().value[0],
+                rpc_error.details(),
+            )
     except Exception as err:
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, str(err))
+
+    reader_error = stats.get("reader_error")
+    if reader_error is not None:
+        raise reader_error
 
     return result
 
 
-def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
-              pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
+def scan_file(
+    channel: grpc.Channel,
+    file_name: str,
+    tags: list[str] = None,
+    pml: bool = False,
+    feedback: bool = False,
+    verbose: bool = False,
+    digest: bool = True,
+) -> str:
     try:
         f = open(file_name, "rb")
         fid = file_name
@@ -205,14 +261,62 @@ def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
     except FileNotFoundError as err:
         logger.debug("File not exist: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NOT_FOUND, file_name)
-    except (PermissionError, IOError) as err:
+    except PermissionError as err:  # only Errno 13 reports no permission
         logger.debug("Permission error: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION, file_name)
+    except OSError as err:
+        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, str(err))
 
     return _scan_data(channel, f, n, fid, tags, pml, feedback, verbose, digest)
 
 
-def scan_buffer(channel: grpc.Channel, bytes_buffer: bytes, uid: str, tags: List[str] = None,
-                pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
+def scan_buffer(
+    channel: grpc.Channel,
+    bytes_buffer: bytes,
+    uid: str,
+    tags: list[str] = None,
+    pml: bool = False,
+    feedback: bool = False,
+    verbose: bool = False,
+    digest: bool = True,
+) -> str:
     f = io.BytesIO(bytes_buffer)
-    return _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose, digest)
+    return _scan_data(
+        channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose, digest
+    )
+
+
+def scan_reader(
+    channel: grpc.Channel,
+    reader: AMaasReader,
+    tags: list[str] = None,
+    pml: bool = False,
+    feedback: bool = False,
+    verbose: bool = False,
+    digest: bool = False,
+) -> str:
+    """Scan a data source through an AMaasReader (see amaas.grpc.reader).
+
+    digest defaults to False because digest calculation reads the whole data
+    source; with a remote reader (e.g. an S3 object) that defeats the purpose
+    of partial reads. Pass digest=True to opt in.
+    """
+    adapter = _ReaderAdapter(reader)
+    try:
+        size = reader.data_size()
+        fid = reader.identifier()
+        return _scan_data(
+            channel,
+            adapter,
+            size,
+            fid,
+            tags,
+            pml,
+            feedback,
+            verbose,
+            digest,
+        )
+    except AMaasException:
+        raise
+    except Exception as err:
+        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, str(err))

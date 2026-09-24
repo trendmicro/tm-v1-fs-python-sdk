@@ -264,6 +264,65 @@ AsyncIO Scan a file for malware and retrieves response data from the API.
 **_Return_**
 String the scanned result in JSON format.
 
+### Scanning with a Reader
+
+`scan_reader` scans a data source through a reader object you provide, mirroring the Go SDK's `AmaasClientReader` interface. The SDK pulls only the chunks the scan engine requests, so a reader backed by a remote source (for example an S3 object) never needs to download the whole object.
+
+Implement the `amaas.grpc.reader.AMaasReader` protocol:
+
+```python
+class AMaasReader(Protocol):
+    def identifier(self) -> str:
+        """Return the identifier of the data source, e.g. "s3://bucket/key"."""
+
+    def data_size(self) -> int:
+        """Return the total size of the data source in bytes."""
+
+    def read_bytes(self, offset: int, length: int) -> bytes:
+        """Return exactly length bytes of the data source starting at offset.
+        The SDK never requests beyond data_size; a short read raises
+        MSG_ID_ERR_RETRIEVE_DATA and fails the scan."""
+```
+
+Then pass the reader to `scan_reader` (or `amaas.grpc.aio.scan_reader`):
+
+```python
+reader = MyS3ObjectReader(bucket, key)
+result = amaas.grpc.scan_reader(handle, reader, tags=tags)
+```
+
+See [examples/scan-s3obj/scan_s3obj.py](examples/scan-s3obj/scan_s3obj.py) for a complete S3 implementation.
+
+#### `def amaas.grpc.scan_reader(handle: grpc.Channel, reader: AMaasReader, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = False) -> str`
+
+Scan a data source through an `AMaasReader` implementation.
+
+**_Parameters_**
+
+| Parameter | Description                                                                                                 |
+| --------- | ----------------------------------------------------------------------------------------------------------- |
+| handle    | The grpc Channel instance was created from the init function.                                               |
+| reader    | An object implementing the `AMaasReader` protocol (identifier / data_size / read_bytes).                    |
+| tags      | A list of strings to be used to tag the scan result. At most 8 tags with a maximum length of 63 characters. |
+| pml       | Enable PML (Predictive Machine Learning) Detection.                                                         |
+| feedback  | Enable SPN feedback for Predictive Machine Learning Detection                                               |
+| verbose   | Enable log verbose mode                                                                                     |
+| digest    | Calculate digests for cache search and result lookup. Defaults to `False` because digest calculation reads the whole data source; with a remote reader that defeats the purpose of partial reads. Pass `True` to opt in. |
+
+**_Return_**
+String the scanned result in JSON format.
+
+#### `def amaas.grpc.aio.scan_reader(handle: grpc.aio.Channel, reader: AMaasReader, tags: List[str], pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = False) -> str`
+
+AsyncIO scan of a data source through an `AMaasReader` implementation. `read_bytes()` runs in a worker thread (`asyncio.to_thread`), so the event loop stays responsive while a remote reader (e.g. S3 ranged GETs) fetches a chunk. Readers stay synchronous, matching the sync client semantics.
+
+**_Parameters_**
+
+Same as `amaas.grpc.scan_reader`, with the aio Channel handle.
+
+**_Return_**
+String the scanned result in JSON format.
+
 ### Cleaning Up
 
 #### `def amaas.grpc.quit(handle: grpc.aio.Channel) -> None`
