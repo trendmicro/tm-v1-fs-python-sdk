@@ -1,29 +1,31 @@
 import asyncio
 import io
+import logging
 import os
-from typing import BinaryIO, List
+from typing import BinaryIO
 
 import grpc
-import logging
 
-from ..protos import scan_pb2
-from ..protos import scan_pb2_grpc
-from ..exception import AMaasException
-from ..exception import AMaasErrorCode
-from ..util import _init_by_region_util
-from ..util import _init_util
-from ..util import _validate_tags
-from ..util import _digest_hex
-from ..util import APP_NAME_HEADER, APP_NAME_FILE_SCAN
+from ..exception import AMaasErrorCode, AMaasException
+from ..protos import scan_pb2, scan_pb2_grpc
+from ..reader import AMaasReader, _ReaderAdapter
+from ..util import (
+    APP_NAME_FILE_SCAN,
+    APP_NAME_HEADER,
+    _digest_hex_pair,
+    _init_by_region_util,
+    _init_util,
+    _validate_tags,
+)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
-LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 logger.setLevel(LOG_LEVEL)
 logger.propagate = False
 
-timeout_in_seconds = int(os.environ.get('TM_AM_SCAN_TIMEOUT_SECS', 300))
-heartbeat_interval_in_seconds = int(os.environ.get('TM_AM_HEARTBEAT_INTERVAL_SECS', 30))
+timeout_in_seconds = int(os.environ.get("TM_AM_SCAN_TIMEOUT_SECS", 300))
+heartbeat_interval_in_seconds = int(os.environ.get("TM_AM_HEARTBEAT_INTERVAL_SECS", 30))
 
 
 def init_by_region(region, api_key, enable_tls=True, ca_cert=None):
@@ -41,8 +43,17 @@ async def quit(handle):
 # https://github.com/grpc/grpc/blob/91083659fa88c938779dd41e57a7f97981b6c9a1/src/python/grpcio_tests/tests_aio/unit/channel_test.py#L180
 
 
-async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, identifier: str, tags: List[str],
-                     pml: bool, feedback: bool, verbose: bool, digest: bool) -> str:
+async def _scan_data(
+    channel: grpc.Channel,
+    data_reader: BinaryIO,
+    size: int,
+    identifier: str,
+    tags: list[str],
+    pml: bool,
+    feedback: bool,
+    verbose: bool,
+    digest: bool,
+) -> str:
     _validate_tags(tags)
     stub = scan_pb2_grpc.ScanStub(channel)
     stats = {}
@@ -52,27 +63,28 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
     file_sha256 = ""
 
     if digest:
-        file_sha1 = "sha1:" + _digest_hex(data_reader, "sha1")
-        file_sha256 = "sha256:" + _digest_hex(data_reader, "sha256")
+        sha1_hex, sha256_hex = await asyncio.to_thread(_digest_hex_pair, data_reader)
+        file_sha1 = "sha1:" + sha1_hex
+        file_sha256 = "sha256:" + sha256_hex
 
     try:
-        metadata = (
-            (APP_NAME_HEADER, APP_NAME_FILE_SCAN),
-        )
+        metadata = ((APP_NAME_HEADER, APP_NAME_FILE_SCAN),)
         call = stub.Run(timeout=timeout_in_seconds, metadata=metadata)
 
-        request = scan_pb2.C2S(stage=scan_pb2.STAGE_INIT,
-                               file_name=identifier,
-                               rs_size=size,
-                               offset=0,
-                               chunk=None,
-                               tags=tags,
-                               trendx=pml,
-                               file_sha1=file_sha1,
-                               file_sha256=file_sha256,
-                               bulk=bulk,
-                               spn_feedback=feedback,
-                               verbose=verbose)
+        request = scan_pb2.C2S(
+            stage=scan_pb2.STAGE_INIT,
+            file_name=identifier,
+            rs_size=size,
+            offset=0,
+            chunk=None,
+            tags=tags,
+            trendx=pml,
+            file_sha1=file_sha1,
+            file_sha256=file_sha256,
+            bulk=bulk,
+            spn_feedback=feedback,
+            verbose=verbose,
+        )
 
         await call.write(request)
 
@@ -89,8 +101,11 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
 
             if response.cmd == scan_pb2.CMD_RETR:
                 if response.stage != scan_pb2.STAGE_RUN:
-                    raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, response.cmd,
-                                         response.stage)
+                    raise AMaasException(
+                        AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE,
+                        response.cmd,
+                        response.stage,
+                    )
                 length = []
                 offset = []
 
@@ -111,29 +126,37 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
                 for i in range(len(length)):
                     logger.debug(f"try to read {length[i]} at offset {offset[i]}")
                     data_reader.seek(offset[i])
-                    chunk = data_reader.read(length[i])
+                    # to_thread keeps remote readers (e.g. S3 ranged GETs) from
+                    # stalling the event loop; local file/buffer reads are
+                    # equally safe off-loop.
+                    chunk = await asyncio.to_thread(data_reader.read, length[i])
 
                     request = scan_pb2.C2S(
                         stage=scan_pb2.STAGE_RUN,
                         file_name=None,
                         rs_size=0,
                         offset=offset[i],
-                        chunk=chunk)
+                        chunk=chunk,
+                    )
 
-                    stats["total_upload"] = stats.get(
-                        "total_upload", 0) + len(chunk)
+                    stats["total_upload"] = stats.get("total_upload", 0) + len(chunk)
 
                     await call.write(request)
             elif response.cmd == scan_pb2.CMD_QUIT:
                 if response.stage != scan_pb2.STAGE_FINI:
-                    raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE, response.cmd,
-                                         response.stage)
+                    raise AMaasException(
+                        AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE,
+                        response.cmd,
+                        response.stage,
+                    )
                 result = response.result
                 logger.debug("receive QUIT, exit loop...")
                 break
             else:
                 logger.debug("unknown command...")
-                raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNKNOWN_CMD, response.cmd)
+                raise AMaasException(
+                    AMaasErrorCode.MSG_ID_ERR_UNKNOWN_CMD, response.cmd
+                )
 
         await call.done_writing()
 
@@ -148,15 +171,26 @@ async def _scan_data(channel: grpc.Channel, data_reader: BinaryIO, size: int, id
         elif rpc_error.code() == grpc.StatusCode.UNAUTHENTICATED:
             raise AMaasException(AMaasErrorCode.MSG_ID_ERR_KEY_AUTH_FAILED)
         else:
-            raise AMaasException(AMaasErrorCode.MSG_ID_GRPC_ERROR, rpc_error.code().value[0], rpc_error.details())
+            raise AMaasException(
+                AMaasErrorCode.MSG_ID_GRPC_ERROR,
+                rpc_error.code().value[0],
+                rpc_error.details(),
+            )
     except Exception as err:
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, str(err))
 
     return result
 
 
-async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = None,
-                    pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
+async def scan_file(
+    channel: grpc.Channel,
+    file_name: str,
+    tags: list[str] = None,
+    pml: bool = False,
+    feedback: bool = False,
+    verbose: bool = False,
+    digest: bool = True,
+) -> str:
     try:
         f = open(file_name, "rb")
         fid = file_name
@@ -164,13 +198,65 @@ async def scan_file(channel: grpc.Channel, file_name: str, tags: List[str] = Non
     except FileNotFoundError as err:
         logger.debug("File not exist: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NOT_FOUND, file_name)
-    except (PermissionError, IOError) as err:
+    except PermissionError as err:  # only Errno 13 reports no permission
         logger.debug("Permission error: " + str(err))
         raise AMaasException(AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION, file_name)
+    except OSError as err:
+        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, str(err))
     return await _scan_data(channel, f, n, fid, tags, pml, feedback, verbose, digest)
 
 
-async def scan_buffer(channel: grpc.Channel, bytes_buffer: bytes, uid: str, tags: List[str] = None,
-                      pml: bool = False, feedback: bool = False, verbose: bool = False, digest: bool = True) -> str:
+async def scan_buffer(
+    channel: grpc.Channel,
+    bytes_buffer: bytes,
+    uid: str,
+    tags: list[str] = None,
+    pml: bool = False,
+    feedback: bool = False,
+    verbose: bool = False,
+    digest: bool = True,
+) -> str:
     f = io.BytesIO(bytes_buffer)
-    return await _scan_data(channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose, digest)
+    return await _scan_data(
+        channel, f, len(bytes_buffer), uid, tags, pml, feedback, verbose, digest
+    )
+
+
+async def scan_reader(
+    channel: grpc.Channel,
+    reader: AMaasReader,
+    tags: list[str] = None,
+    pml: bool = False,
+    feedback: bool = False,
+    verbose: bool = False,
+    digest: bool = False,
+) -> str:
+    """Scan a data source through an AMaasReader (see amaas.grpc.reader).
+
+    read_bytes() runs in a worker thread (asyncio.to_thread), so the event
+    loop stays responsive while a remote reader (e.g. S3 ranged GETs) fetches
+    a chunk. Readers stay synchronous, matching the sync client semantics.
+
+    digest defaults to False because digest calculation reads the whole data
+    source; with a remote reader (e.g. an S3 object) that defeats the purpose
+    of partial reads. Pass digest=True to opt in.
+    """
+    adapter = _ReaderAdapter(reader)
+    try:
+        size = reader.data_size()
+        fid = reader.identifier()
+        return await _scan_data(
+            channel,
+            adapter,
+            size,
+            fid,
+            tags,
+            pml,
+            feedback,
+            verbose,
+            digest,
+        )
+    except AMaasException:
+        raise
+    except Exception as err:
+        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, str(err))

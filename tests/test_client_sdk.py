@@ -1,7 +1,5 @@
-import grpc
 import json
 import os
-import pytest
 import random
 import tempfile
 import uuid
@@ -9,10 +7,11 @@ from concurrent import futures
 from unittest.mock import patch
 
 import amaas.grpc
-from .mock_server import MockScanServicer
-from amaas.grpc.exception import AMaasErrorCode
-from amaas.grpc.exception import AMaasException
+import grpc
+import pytest
+from amaas.grpc.exception import AMaasErrorCode, AMaasException
 
+from .mock_server import MockScanServicer
 
 NUM_DATA_LOOP = 128
 _, TEST_DATA_FILE_NAME = tempfile.mkstemp()
@@ -305,7 +304,7 @@ def test_scan_file_identifier_is_full_path():
 #
 def test_scan_file_not_found():
     handle = grpc.insecure_channel(f"localhost:{SERVER_PORT}")
-    NOT_EXIST_FILE = f"{str(uuid.uuid4())}.txt"
+    NOT_EXIST_FILE = f"{uuid.uuid4()!s}.txt"
     with pytest.raises(AMaasException) as exc_info:
         amaas.grpc.scan_file(handle, NOT_EXIST_FILE)
     assert exc_info.value.args[0] == AMaasErrorCode.MSG_ID_ERR_FILE_NOT_FOUND
@@ -325,6 +324,18 @@ def test_scan_file_no_permission():
     assert exc_info.value.args[0] == AMaasErrorCode.MSG_ID_ERR_FILE_NO_PERMISSION
     assert exc_info.value.args[1] == NOT_PERMISSION_FILE
     os.remove(NOT_PERMISSION_FILE)
+
+
+#
+# Testing the SDK scan_file method failed with MSG_ID_ERR_UNEXPECTED_ERROR
+# for an OSError that is neither not-found nor permission-denied.
+#
+def test_scan_file_other_os_error():
+    handle = grpc.insecure_channel(f"localhost:{SERVER_PORT}")
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with pytest.raises(AMaasException) as exc_info:
+        amaas.grpc.scan_file(handle, dir_path)
+    assert exc_info.value.args[0] == AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR
 
 
 #

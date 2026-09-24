@@ -20,7 +20,10 @@ class AMaasException(Exception):
 class AMaasErrorCode(Enum):
     MSG_ID_ERR_FILE_NOT_FOUND = "Failed to open file. No such file or directory %s."
     MSG_ID_ERR_FILE_NO_PERMISSION = "Failed to open file. Permission denied to open %s."
-    MSG_ID_ERR_INVALID_REGION = "%s is not a supported region, region value should be one of %s"
+    MSG_ID_ERR_RETRIEVE_DATA = "Attempted to read %d bytes but only retrieved %d"
+    MSG_ID_ERR_INVALID_REGION = (
+        "%s is not a supported region, region value should be one of %s"
+    )
     MSG_ID_ERR_MISSING_AUTH = "Must provide an API key to use the client."
     MSG_ID_GRPC_ERROR = "Received gRPC status code: %s, msg: %s."
     MSG_ID_ERR_KEY_AUTH_FAILED = "Invalid token or Api Key."
@@ -28,6 +31,8 @@ class AMaasErrorCode(Enum):
     MSG_ID_ERR_UNKNOWN_STAGE = "Received unknown stage from server: %d"
     MSG_ID_ERR_UNEXPECTED_CMD_AND_STAGE = "Received unexpected command %d and stage %d."
     MSG_ID_ERR_UNEXPECTED_ERROR = "Unexpected error encountered. %s"
-    MSG_ID_ERR_RATE_LIMIT_EXCEEDED = "Raised by the SDK library to indicate http 429 too many request error."
+    MSG_ID_ERR_RATE_LIMIT_EXCEEDED = (
+        "Raised by the SDK library to indicate http 429 too many request error."
+    )
     MSG_ID_ERR_INVALID_TAG = "Invalid tag format: %s."
     MSG_ID_ERR_TAG_NUMBER_EXCEED = "Too many tags: %d."

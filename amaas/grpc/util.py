@@ -1,8 +1,9 @@
-import grpc
 import hashlib
-from typing import BinaryIO, List
-from .exception import AMaasException
-from .exception import AMaasErrorCode
+from typing import BinaryIO
+
+import grpc
+
+from .exception import AMaasErrorCode, AMaasException
 
 HASH_CHUNK_SIZE = 512 * 1024
 
@@ -35,12 +36,45 @@ C1_AE_REGION = "ae-1"
 C1_ZA_REGION = "za-1"
 C1_ID_REGION = "id-1"
 
-C1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
-             C1_US_REGION, C1_TREND_REGION, C1_ZA_REGION, C1_ID_REGION]
-V1Regions = [AWS_AU_REGION, AWS_DE_REGION, AWS_IN_REGION, AWS_JP_REGION, AWS_SG_REGION, AWS_US_REGION, AWS_AE_REGION, AWS_CA_REGION, AWS_GB_REGION, AWS_ZA_REGION, AWS_ID_REGION]
+C1Regions = [
+    C1_AU_REGION,
+    C1_CA_REGION,
+    C1_DE_REGION,
+    C1_GB_REGION,
+    C1_IN_REGION,
+    C1_JP_REGION,
+    C1_SG_REGION,
+    C1_US_REGION,
+    C1_TREND_REGION,
+    C1_ZA_REGION,
+    C1_ID_REGION,
+]
+V1Regions = [
+    AWS_AU_REGION,
+    AWS_DE_REGION,
+    AWS_IN_REGION,
+    AWS_JP_REGION,
+    AWS_SG_REGION,
+    AWS_US_REGION,
+    AWS_AE_REGION,
+    AWS_CA_REGION,
+    AWS_GB_REGION,
+    AWS_ZA_REGION,
+    AWS_ID_REGION,
+]
 SupportedV1Regions = V1Regions
-SupportedC1Regions = [C1_AU_REGION, C1_CA_REGION, C1_DE_REGION, C1_GB_REGION, C1_IN_REGION, C1_JP_REGION, C1_SG_REGION,
-                      C1_US_REGION, C1_ZA_REGION, C1_ID_REGION]
+SupportedC1Regions = [
+    C1_AU_REGION,
+    C1_CA_REGION,
+    C1_DE_REGION,
+    C1_GB_REGION,
+    C1_IN_REGION,
+    C1_JP_REGION,
+    C1_SG_REGION,
+    C1_US_REGION,
+    C1_ZA_REGION,
+    C1_ID_REGION,
+]
 
 AllRegions = C1Regions + V1Regions
 AllValidRegions = SupportedC1Regions + SupportedV1Regions
@@ -65,19 +99,21 @@ class _GrpcAuth(grpc.AuthMetadataPlugin):
         self._key = key
 
     def __call__(self, context, callback):
-        callback((('authorization', self._key),), None)
+        callback((("authorization", self._key),), None)
 
 
-def _init_util(host, api_key=None, enable_tls=False, ca_cert=None, is_aio_channel=False):
+def _init_util(
+    host, api_key=None, enable_tls=False, ca_cert=None, is_aio_channel=False
+):
     call_creds = None
     if api_key:
-        auth_key_str = 'ApiKey ' + api_key
+        auth_key_str = "ApiKey " + api_key
         call_creds = grpc.metadata_call_credentials(_GrpcAuth(auth_key_str))
 
     if enable_tls:
         if ca_cert:
             # Bring Your Own Certificate case
-            with open(ca_cert, 'rb') as f:
+            with open(ca_cert, "rb") as f:
                 ssl_creds = grpc.ssl_channel_credentials(f.read())
         else:
             ssl_creds = grpc.ssl_channel_credentials()
@@ -89,36 +125,50 @@ def _init_util(host, api_key=None, enable_tls=False, ca_cert=None, is_aio_channe
         else:
             creds = grpc.composite_channel_credentials(ssl_creds, call_creds)
 
-        channel = grpc.aio.secure_channel(host, creds) if is_aio_channel else grpc.secure_channel(host, creds)
+        channel = (
+            grpc.aio.secure_channel(host, creds)
+            if is_aio_channel
+            else grpc.secure_channel(host, creds)
+        )
     else:
-        channel = grpc.aio.insecure_channel(host) if is_aio_channel else grpc.insecure_channel(host)
+        channel = (
+            grpc.aio.insecure_channel(host)
+            if is_aio_channel
+            else grpc.insecure_channel(host)
+        )
 
     return channel
 
 
-def _init_by_region_util(region, api_key, enable_tls=True, ca_cert=None, is_aio_channel=False):
+def _init_by_region_util(
+    region, api_key, enable_tls=True, ca_cert=None, is_aio_channel=False
+):
     mapping = {
-        C1_US_REGION: 'antimalware.us-1.cloudone.trendmicro.com:443',
-        C1_IN_REGION: 'antimalware.in-1.cloudone.trendmicro.com:443',
-        C1_DE_REGION: 'antimalware.de-1.cloudone.trendmicro.com:443',
-        C1_SG_REGION: 'antimalware.sg-1.cloudone.trendmicro.com:443',
-        C1_AU_REGION: 'antimalware.au-1.cloudone.trendmicro.com:443',
-        C1_JP_REGION: 'antimalware.jp-1.cloudone.trendmicro.com:443',
-        C1_GB_REGION: 'antimalware.gb-1.cloudone.trendmicro.com:443',
-        C1_CA_REGION: 'antimalware.ca-1.cloudone.trendmicro.com:443',
-        C1_AE_REGION: 'antimalware.ae-1.cloudone.trendmicro.com:443',
-        C1_ZA_REGION: 'antimalware.za-1.cloudone.trendmicro.com:443',
-        C1_ID_REGION: 'antimalware.id-1.cloudone.trendmicro.com:443',
+        C1_US_REGION: "antimalware.us-1.cloudone.trendmicro.com:443",
+        C1_IN_REGION: "antimalware.in-1.cloudone.trendmicro.com:443",
+        C1_DE_REGION: "antimalware.de-1.cloudone.trendmicro.com:443",
+        C1_SG_REGION: "antimalware.sg-1.cloudone.trendmicro.com:443",
+        C1_AU_REGION: "antimalware.au-1.cloudone.trendmicro.com:443",
+        C1_JP_REGION: "antimalware.jp-1.cloudone.trendmicro.com:443",
+        C1_GB_REGION: "antimalware.gb-1.cloudone.trendmicro.com:443",
+        C1_CA_REGION: "antimalware.ca-1.cloudone.trendmicro.com:443",
+        C1_AE_REGION: "antimalware.ae-1.cloudone.trendmicro.com:443",
+        C1_ZA_REGION: "antimalware.za-1.cloudone.trendmicro.com:443",
+        C1_ID_REGION: "antimalware.id-1.cloudone.trendmicro.com:443",
     }
 
     # make sure it is valid V1 or C1 region
     if region not in SupportedV1Regions:
-        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, SupportedV1Regions)
+        raise AMaasException(
+            AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, SupportedV1Regions
+        )
     else:
         # map it to C1 region if it is V1 region
         c1_region = V1ToC1RegionMapping.get(region)
         if not c1_region:
-            raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, SupportedV1Regions)
+            raise AMaasException(
+                AMaasErrorCode.MSG_ID_ERR_INVALID_REGION, region, SupportedV1Regions
+            )
         region = c1_region
 
     host = mapping.get(region, None)
@@ -127,7 +177,7 @@ def _init_by_region_util(region, api_key, enable_tls=True, ca_cert=None, is_aio_
     return _init_util(host, api_key, enable_tls, ca_cert, is_aio_channel)
 
 
-def _validate_tags(tags: List[str]):
+def _validate_tags(tags: list[str]):
     if tags is not None:
         if len(tags) > 8:
             raise AMaasException(AMaasErrorCode.MSG_ID_ERR_TAG_NUMBER_EXCEED, len(tags))
@@ -137,21 +187,20 @@ def _validate_tags(tags: List[str]):
                 raise AMaasException(AMaasErrorCode.MSG_ID_ERR_INVALID_TAG, t)
 
 
-def _digest_hex(data_reader: BinaryIO, algorithm: str):
-    if algorithm == "sha1":
-        file_hash = hashlib.sha1()
-    elif algorithm == "sha256":
-        file_hash = hashlib.sha256()
-    else:
-        raise AMaasException(AMaasErrorCode.MSG_ID_ERR_UNEXPECTED_ERROR, "unsupported hash algorithm " + algorithm)
+def _digest_hex_pair(data_reader: BinaryIO) -> tuple[str, str]:
+    """Compute the sha1 and sha256 hex digests in a single pass over
+    data_reader, so a remote reader downloads its source only once."""
+    sha1_hash = hashlib.sha1()
+    sha256_hash = hashlib.sha256()
 
     w = data_reader.tell()
     data_reader.seek(0)
 
     chunk = data_reader.read(HASH_CHUNK_SIZE)
     while chunk:
-        file_hash.update(chunk)
+        sha1_hash.update(chunk)
+        sha256_hash.update(chunk)
         chunk = data_reader.read(HASH_CHUNK_SIZE)
 
     data_reader.seek(w)
-    return file_hash.hexdigest()
+    return sha1_hash.hexdigest(), sha256_hash.hexdigest()

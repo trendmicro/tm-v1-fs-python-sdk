@@ -90,6 +90,70 @@ If you plan on using a Trend Vision One region, be sure to pass in region parame
    python3 client_aio.py -f FILENAME -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls --api_key API_KEY
    ```
 
+### Run with the S3 object scan example
+
+`scan-s3obj/scan_s3obj.py` scans an S3 object **in place**: it sends ranged S3 GETs for
+only the chunks the scan engine requests, so the object is never downloaded in full.
+The SDK example also demonstrates `amaas.grpc.scan_reader` with a custom `AMaasReader`
+implementation you can copy for other data sources.
+
+1. Install the example's dependencies:
+
+   ```sh
+   cd examples/scan-s3obj/
+   python3 -m pip install -r requirements.txt
+   ```
+
+2. Configure credentials for your S3 bucket as usual (environment, `~/.aws/credentials`, or
+   an instance role). Then run the example:
+
+   ```sh
+   python3 scan_s3obj.py -b BUCKET -k KEY --bucketregion us-west-2 -r us-east-1 --tls --api_key API_KEY
+   ```
+
+   or with a File Security server address `-a` instead of region `-r`:
+
+   ```sh
+   python3 scan_s3obj.py -b BUCKET -k KEY --bucketregion us-west-2 -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls --api_key API_KEY
+   ```
+
+   Keep `--no-digest` (the default) for large objects: digest calculation reads the whole
+   object and would defeat the partial-read design.
+
+### Run with the Azure Blob scan example
+
+`scan-azureblob/scan_azureblob.py` scans an Azure block blob **in place**: it sends ranged
+blob downloads for only the chunks the scan engine requests, so the blob is never downloaded
+in full.
+
+1. Install the example's dependencies:
+
+   ```sh
+   cd examples/scan-azureblob/
+   python3 -m pip install -r requirements.txt
+   ```
+
+2. Authenticate with one of:
+
+   - `--sas_token`: a blob service SAS token with read permission (dev/test)
+   - none: `DefaultAzureCredential` (az login, managed identity, environment variables).
+     Your account needs the `Storage Blob Data Reader` role on the storage account.
+
+3. Run the example:
+
+   ```sh
+   python3 scan_azureblob.py -u https://ACCOUNT.blob.core.windows.net -c CONTAINER -b BLOB --sas_token "$SAS" -r us-east-1 --tls --api_key API_KEY
+   ```
+
+   or with a File Security server address `-a` instead of region `-r`:
+
+   ```sh
+   python3 scan_azureblob.py -u https://ACCOUNT.blob.core.windows.net -c CONTAINER -b BLOB -a antimalware._REGION_.cloudone.trendmicro.com:443 --tls --api_key API_KEY
+   ```
+
+   Keep `--no-digest` (the default) for large blobs: digest calculation reads the whole
+   blob and would defeat the partial-read design.
+
 ## File Security Post Scan Actions
 
 Actions to perform after scanning files with Trend Vision One™ File Security
