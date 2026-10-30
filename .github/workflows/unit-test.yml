@@ -12,15 +12,16 @@ jobs:
       - uses: actions/checkout@v3
 
       # Set up every interpreter in the tox.ini envlist. The *last* entry becomes
-      # the default `python`, so keep 3.9 last: `make test` stays on the
-      # requires-python = ">=3.9" floor, and only tox reaches for 3.10/3.11.
+      # the default `python`, so keep 3.14 last: every step below behaves as
+      # before, with only tox reaching for the others.
       - name: Prepare python env
         uses: actions/setup-python@v4
         with:
           python-version: |
+            3.13
+            3.12
             3.11
-            3.10
-            3.9
+            3.14
 
       # Install uv
       - name: Install uv
@@ -31,9 +32,9 @@ jobs:
         run: make test
 
       # Exercise tox on every PR instead of only at release time.
-      # tox >= 4.31 requires Python >= 3.10, so install it with 3.11 to resolve
-      # the same tox release the publish workflow uses.
+      # tox >= 4.31 requires Python >= 3.10, so install it with 3.14, the
+      # default `python`.
       - name: Install tox
-        run: python3.11 -m pip install tox
+        run: python3.14 -m pip install tox
       - name: Run tox
-        run: python3.11 -m tox
+        run: python3.14 -m tox

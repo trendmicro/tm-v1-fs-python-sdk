@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.5.1 - 2026-10-27
+
+- Drop Python 3.9 and 3.10 support (both end-of-life). Requires Python 3.11+; existing 3.9/3.10 users stay on older releases.
+- Add Python 3.14 support (supported range is now 3.11–3.14).
+- Bump grpcio to 1.84.1 for all supported Python versions, replacing the
+  version-conditional pins (1.71.x below 3.14, 1.75.1 on 3.14), to pick up
+  grpcio's eMudhra CA remediation.
+
 ## 1.5.0 - 2026-09-15
 
 - Add `scan_reader` (sync and aio) for scanning a data source through a reader implementing
