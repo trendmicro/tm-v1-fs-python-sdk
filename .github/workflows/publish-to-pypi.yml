@@ -24,14 +24,15 @@ jobs:
       - uses: actions/checkout@v3
       # Every interpreter in the tox.ini envlist must exist or tox cannot create
       # that environment. The *last* entry becomes the default `python`, so keep
-      # 3.11 last: `uv python pin 3.11` and `make build` below are unaffected.
+      # 3.14 last: `uv python pin 3.11` and `make build` below are unaffected.
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: |
-            3.9
-            3.10
+            3.13
+            3.12
             3.11
+            3.14
 
       - name: Install pypa/build
         run: |
